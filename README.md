@@ -135,30 +135,30 @@ These modules contain classes are useful for scenarios where you need to work wi
 
 These classes use arrays to represent coordinates, which get converted to strings to use as keys. In `BooleanInfiniteGrid`, these keys are stored in a `Set`; a key's presence in the `Set` indicates that the value at those coordinates is `true`; otherwise, the value is `false`. For `InfiniteGrid`, the elements are stored in a `Map` under those keys. You can create your own infinite grid implementation by extending `AbstractInfiniteGrid`.
 
-## `bounds`
+### `bounds`
 
 This module contains the `Bounds` class, which is used to represent the bounds of an `n`-dimensional space. This class is used by `AbstractInfiniteGrid` to keep track of the grid bounds, but you can also use it independently.
 
-## `circular-linked-list`
+### `circular-linked-list`
 
 This class is a data structure that keeps elements in a circular list. You can rotate the pointer around the list, inspect the element at the pointer, remove that element, or insert elements before or after that element. The advantage this class has over arrays is that insertions and removals are much less expensive, because there is no need to shift elements.
 
-## `grid-to-graph`
+### `grid-to-graph`
 
 This takes a two-dimensional array representing a maze and converts it to a graph. You specify the characters that represent walls and empty space, and any other character is converted to a graph node, and distances are computed for the edges.
 
-## `math2`
+### `math2`
 
 Additional math functions on top of those present in the built-in `Math` object.
 
-## `priority-queue`
+### `priority-queue`
 
 A class which implements a queue where elements are dequeued in order of priority. Priority is determined by a comparator function provided when the queue is created.
 
-## `summed-area-table`
+### `summed-area-table`
 
 This class is useful for quickly calculating the sum of all values in a rectangular area of a two-dimensional array.
 
-## `util`
+### `util`
 
 Miscellaneous utility functions.

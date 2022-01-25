@@ -1,0 +1,24 @@
+{
+  "name": "advent",
+  "version": "1.0.0",
+  "description": "Advent of Code solutions by rjwut",
+  "main": "./src/framework/index.js",
+  "author": "rjwut",
+  "license": "ISC",
+  "engines": {
+    "node": ">=16"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "jest",
+    "generate": "node ./src/framework/generate",
+    "start": "node ./src/framework",
+    "session": "node ./src/framework/set-session",
+    "2019-25": "node ./src/solutions/2019/day-25.interactive"
+  },
+  "devDependencies": {
+    "eslint": "^8.7.0",
+    "eslint-plugin-jest": "^25.7.0",
+    "jest": "^27.4.3"
+  }
+}

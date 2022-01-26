@@ -133,7 +133,7 @@ const part1 = input => {
  * each square adjacent to the one specified by the given coordinates. We just
  * sum up all the non-`undefined` values provided and put that value in that
  * grid cell. We keep going in this way until the sum equals or exceeds
- * `input` at which poin the value of `sum` is our answer.
+ * `input` at which point the value of `sum` is our answer.
  *
  * @param {number} input - the puzzle input
  * @returns {number} - the answer to part two

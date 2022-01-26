@@ -2,3 +2,4 @@ input/**
 !input/README.md
 node_modules/
 .vscode/
+coverage/

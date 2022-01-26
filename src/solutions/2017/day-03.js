@@ -37,7 +37,7 @@ module.exports = (input, part) => {
  * The answer to the first part of the puzzle is a Manhattan distance. This can
  * be represented as two straight lines, one in the `X` direction and one in
  * the `Y` direction, connecting the target square to the origin. The longer of
- * two lines will always have a length equal to the index of the ring that
+ * the two lines will always have a length equal to the index of the ring that
  * `input` falls on. Let's call this value `dLong`, and the other value
  * `dShort`. So our answer for this part of the puzzle is `dLong + dShort`.
  *

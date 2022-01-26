@@ -4,20 +4,18 @@ const path = require('path');
 const MASTHEAD = require('./masthead');
 const fancyDigits = require('./fancy-digits');
 const fetchInput = require('./fetch-input');
-const AnsiWriter = require('./ansi-writer');
+const ansi = require('./ansi');
 
 const FIRST_AOC_YEAR = 2015;
 const SOLUTIONS_DIR = path.join(__dirname, '..', 'solutions');
 const YEAR_REGEXP = /^\d{4}$/;
-
-const stdout = new AnsiWriter();
-const stderr = new AnsiWriter(process.stderr);
+const GREEN = ansi(ansi.FG_GREEN, ansi.BOLD);
+const RED = ansi(ansi.FG_RED, ansi.BOLD);
+const RESET = ansi(ansi.RESET);
+const YELLOW = ansi(ansi.FG_YELLOW, ansi.BOLD);
 
 const fail = msg => {
-  stderr
-    .style(AnsiWriter.RED, AnsiWriter.BOLD)
-    .write(msg + '\n')
-    .resetStyle();
+  console.error(`${RED}${msg}${RESET}`);
   process.exit(1);
 };
 
@@ -97,17 +95,17 @@ const run = async () => {
     }
   }
 
-  stdout.write(MASTHEAD);
+  console.log(MASTHEAD);
 
   if (year === undefined) {
     for (const year of validYears) {
-      await runYear(year, stdout);
+      await runYear(year);
     }
   } else if (day === undefined) {
-    await runYear(year, stdout);
+    await runYear(year);
   } else {
-    stdout.write(fancyDigits(year) + '\n');
-    await runDay(year, day, stdout);
+    console.log(fancyDigits(year) + '\n');
+    await runDay(year, day);
   }
 };
 
@@ -139,8 +137,8 @@ const getLastDayForYear = async year => {
  *
  * @param {string} year - the year to run
  */
-const runYear = async (year) => {
-  stdout.write(fancyDigits(year) + '\n');
+const runYear = async year => {
+  console.log(fancyDigits(year));
 
   for (let day = 1; day < 26; day++) {
     try {
@@ -174,30 +172,10 @@ const runDay = async (year, day) => {
 
   const input = await fetchInput(year, day);
   const dayModule = require(`../solutions/${year}/${moduleName}`);
-  stdout
-    .write('Day ')
-    .style(AnsiWriter.FG_YELLOW, AnsiWriter.BOLD)
-    .write(day.padStart(2, ' '))
-    .resetStyle();
+  process.stdout.write(`Day ${YELLOW}${day.padStart(2, ' ')}${RESET}`);
   const answers = await dayModule(input);
-  stdout
-    .write(', part ')
-    .style(AnsiWriter.FG_YELLOW, AnsiWriter.BOLD)
-    .write('1')
-    .resetStyle()
-    .write(': ')
-    .style(AnsiWriter.FG_GREEN, AnsiWriter.BOLD)
-    .write(answers[0])
-    .resetStyle()
-    .write('\n        part ')
-    .style(AnsiWriter.FG_YELLOW, AnsiWriter.BOLD)
-    .write('2')
-    .resetStyle()
-    .write(': ')
-    .style(AnsiWriter.FG_GREEN, AnsiWriter.BOLD)
-    .write(answers[1])
-    .resetStyle()
-    .write('\n');
+  process.stdout.write(`, part ${YELLOW}1${RESET}: ${GREEN}${answers[0]}${RESET}\n`);
+  process.stdout.write(`        part ${YELLOW}2${RESET}: ${GREEN}${answers[1]}${RESET}\n`);
 }
 
 run();

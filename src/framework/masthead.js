@@ -1,5 +1,8 @@
-const AnsiWriter = require('./ansi-writer');
+const ansi = require('./ansi');
 
+const GREEN = ansi(ansi.FG_GREEN, ansi.BOLD);
+const RED = ansi(ansi.FG_RED, ansi.BOLD);
+const RESET = ansi(ansi.RESET);
 const ADVENT = [
   '    ___       __                 __',
   '   /   | ____/ /   _____  ____  / /_',
@@ -22,25 +25,13 @@ const CODE = [
   '\\____/\\____/\\__,_/\\___/',
 ];
 
-const chunks = [];
-const writeable = {
-  write: str => chunks.push(str),
-};
-const ansi = new AnsiWriter(writeable);
+let lines = [];
 
 for (let i = 0; i < ADVENT.length; i++) {
-  ansi
-    .style(AnsiWriter.FG_RED, AnsiWriter.BOLD)
-    .write(ADVENT[i])
-    .resetStyle()
-    .write(OF[i])
-    .style(AnsiWriter.FG_GREEN, AnsiWriter.BOLD)
-    .write(CODE[i])
-    .resetStyle()
-    .write('\n');
+  lines.push(`${RED}${ADVENT[i]}${RESET}${OF[i]}${GREEN}${CODE[i]}${RESET}`);
 }
 
 /**
  * Exports a string that prints out a fun masthead to print out to the console.
  */
-module.exports = chunks.join('');
+module.exports = lines.join('\n');

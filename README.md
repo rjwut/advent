@@ -104,7 +104,7 @@ When I begin a puzzle day, I execute `npm run generate {year} {day}` to build th
 
 ## Workflow for Developing a Puzzle Solution
 
-I follow test-driven development when tackling each day's puzzle. The first thing I do after reading the puzzle description is to take any example data given in the puzzle and put it into the test module. Then I write in the expected answer(s) for the example data for part one, leaving part two as `undefined`, and change `xtest()` to `test()` to add the test to the suite.
+I follow test-driven development when tackling each day's puzzle. The first thing I do after reading the puzzle description is to take any example data given in the puzzle and put it into the test module. Then I write in the expected answer(s) for the example data for part one, leaving part two as `undefined`.
 
 Sometimes a puzzle will give more than one example; in that case, I will usually adapt the test module to run through all of them. Also, there will sometimes be examples that only work for one part or the other; in this case, I will often make it so that you can pass the part you want solved into the solution module, and it will return just that part instead of both.
 

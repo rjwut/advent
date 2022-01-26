@@ -1,8 +1,7 @@
 /*
  * This script generates source and test files for a puzzle. Only files that
- * don't already exist will be generated. The tests are initially set to be
- * skipped (`xtest()`); remove the `x` when you're ready to implement the test.
- * Run this script with `npm run generate {year} {day}`.
+ * don't already exist will be generated. Run this script with `npm run
+ * generate {year} {day}`.
  *
  * TODO Intelligently select the year and day when omitted.
  * Each puzzle is released at midnight EST.
@@ -11,11 +10,13 @@
  */
 const fs = require('fs');
 const path = require('path');
-const AnsiWriter = require('./ansi-writer');
+const ansi = require('./ansi');
 
 const SRC_DIR = path.join(__dirname, '..', 'solutions');
-
-const writer = new AnsiWriter();
+const GREEN = ansi(ansi.FG_GREEN, ansi.BOLD);
+const RED = ansi(ansi.FG_RED, ansi.BOLD);
+const RESET = ansi(ansi.RESET);
+const YELLOW = ansi(ansi.FG_YELLOW, ansi.BOLD);
 
 /**
  * Generates the source and test file for a puzzle.
@@ -28,10 +29,7 @@ const run = async () => {
   }
 
   if (args.length < 2) {
-    writer
-      .style(AnsiWriter.FG_RED, AnsiWriter.BOLD)
-      .write('You must specify a year and day to generate.\n')
-      .resetStyle();
+    console.error(`${RED}You must specify a year and day to generate.${RESET}`);
     return 1;
   }
 
@@ -58,7 +56,7 @@ module.exports = input => {
 
 const EXAMPLE = \`\`;
 
-xtest('Day ${day}', () => {
+test('Day ${day}', () => {
   expect(solver(EXAMPLE)).toEqual([ undefined, undefined ]);
 });
 `;
@@ -80,17 +78,11 @@ const writeIfDoesNotExist = (filePath, content) => {
       throw err;
     }
 
-    writer
-      .style(AnsiWriter.FG_YELLOW, AnsiWriter.BOLD)
-      .write(`File already exists: ${filePath}\n`)
-      .resetStyle();
+    console.log(`${YELLOW}File already exists: ${filePath}${RESET}`);
     return;
   }
 
-  writer
-    .style(AnsiWriter.FG_GREEN, AnsiWriter.BOLD)
-    .write(`Generated: ${filePath}\n`)
-    .resetStyle();
+  console.log(`${GREEN}Generated: ${filePath}${RESET}`);
 };
 
 (async () => {

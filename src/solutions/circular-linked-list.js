@@ -69,7 +69,7 @@ class CircularLinkedList {
    * @throws {Error} - if `pointerId` is not a valid pointer ID
    */
   peek(pointerId = 0) {
-    return this.#size === 0 ? undefined : this.#get(pointerId).value;
+    return this.#get(pointerId)?.value;
   }
 
   /**
@@ -134,6 +134,7 @@ class CircularLinkedList {
    *
    * @param {number} [pointerId=0] - the ID of the pointer to use
    * @returns {*} - the removed element
+   * @throws {Error} - if `pointerId` is not a valid pointer ID
    */
   remove(pointerId = 0) {
     if (this.#size === 0) {
@@ -149,12 +150,9 @@ class CircularLinkedList {
     } else {
       removed.prev.next = removed.next;
       removed.next.prev = removed.prev;
-
-      for (let [ id, node ] of this.#pointers.entries()) {
-        if (node === removed) {
-          this.#pointers.set(id, removed.next);
-        }
-      }
+      this.#findPointersAt(removed).forEach(id => {
+        this.#pointers.set(id, removed.next);
+      });
     }
 
     this.#size--;
@@ -162,31 +160,145 @@ class CircularLinkedList {
   }
 
   /**
+   * Removes all elements and pointers (except pointer `0`) from the list.
+   */
+  clear() {
+    this.#pointers.clear();
+    this.#pointers.set(0, null);
+    this.#size = 0;
+  }
+
+  /**
    * Returns an array containing `count` elements, starting at the pointer's
    * current element, and continuing forward (or backward if `reverse` is true)
    * until `count` elements have been collected. The same element will appear
-   * multiple times if `count` is larger than the list's `size`. If the list is
-   * empty, `subsequence()` will throw an `Error`.
+   * multiple times if `count` is larger than the list's `size`. The returned
+   * elements are not removed from the list, and no pointers are moved. If the
+   * list is empty, `sequence()` will throw an `Error`.
    *
    * @param {number} count - the number of elements to collect
    * @param {number} [pointerId=0] - the ID of the pointer to use
    * @param {boolean} reverse - whether to navigate the list backwards
+   * @throws {Error} - if the list is empty
+   * @throws {Error} - if `pointerId` is not a valid pointer ID
    */
-  subsequence = (count, pointerId = 0, reverse = false) => {
+  sequence(count, pointerId = 0, reverse = false) {
     if (this.#size === 0) {
-      throw new Error('Cannot get subsequence of empty list');
+      throw new Error('Cannot get sequence of empty list');
     }
 
     const dir = reverse ? 'prev' : 'next';
     let node = this.#get(pointerId);
-    const subsequence = [];
+    const sequence = [];
 
     for (let i = 0; i < count; i++) {
-      subsequence.push(node.value);
+      sequence.push(node.value);
       node = node[dir];
     }
 
-    return subsequence;
+    return sequence;
+  }
+
+  /**
+   * Removes the indicated number of elements from the list, starting with the
+   * one at the current location of the specified pointer, inserts the given
+   * elements in their place, then returns an array containing the removed
+   * elements in order. If any elements are inserted but none were deleted,
+   * they will be inserted just before the pointer's current element.
+   *
+   * This method may change the specified pointer's location, as well as the
+   * locations of any pointers that pointed at the removed elements. Other
+   * pointers will not move. The following rules explain how the pointers are
+   * moved:
+   *
+   * - If any elements were inserted, the pointers will point at the first
+   *   inserted element.
+   * - If no elements were inserted but at least one but less than all elements
+   *   were removed, the pointers will point at the first element after those
+   *   that were deleted.
+   * - If no elements were inserted but all elements were removed, all pointers
+   *   will point at nothing.
+   * - If no elements were inserted or removed, no pointers will change.
+   *
+   * @param {number} remove - the number of elements to remove
+   * @param {Array} [insert=[]] - the elements to insert 
+   * @param {nunber=0} [pointerId=0] - the ID of the pointer to use 
+   * @throws {TypeError} - if `remove` is not an integer or less than `0`
+   * @throws {Error} - if `remove` is greater than the number of elements in
+   * the list
+   * @throws {TypeError} - if `insert` is provided and is not an array
+   * @throws {Error} - if `pointerId` is not a valid pointer ID
+   */
+  splice(remove, insert = [], pointerId = 0) {
+    if (!Number.isInteger(remove) || remove < 0) {
+      throw new TypeError(`Invalid number of elements to remove: ${remove}`);
+    }
+
+    if (remove > this.#size) {
+      throw new Error(`Can't remove ${remove}; list only has ${this.#size}`);
+    }
+
+    if (!Array.isArray(insert)) {
+      throw new TypeError('Values to insert must be an array');
+    }
+
+    const removed = [];
+    let removedPointers = [];
+    let current = this.#get(pointerId);
+    let before = current?.prev;
+    let after;
+
+    for (let i = 0; i < remove; i++) {
+      removedPointers = [ ...removedPointers, ...this.#findPointersAt(current) ];
+      removed.push(current.value);
+      current = current.next;
+    }
+
+    after = current;
+
+    if (remove === this.#size) {
+      before = null;
+      after = null;
+    }
+
+    let firstInserted = after;
+    current = before;
+    insert.forEach(element => {
+      const node = {
+        value: element,
+        prev: current,
+      };
+
+      if (current) {
+        current.next = node;
+      }
+
+      current = node;
+
+      if (firstInserted === after) {
+        firstInserted = node;
+      }
+    });
+
+    if (after) {
+      current.next = after;
+      after.prev = current;
+    } else if (insert.length) {
+      current.next = firstInserted;
+      firstInserted.prev = current;
+      after = firstInserted;
+    }
+
+    removedPointers.forEach(id => {
+      this.#pointers.set(id, firstInserted);
+    });
+
+    if (insert.length) {
+      this.#pointers.set(pointerId, firstInserted);
+    }
+
+    this.#size = this.#size + insert.length - remove;
+    return removed;
   }
 
   /**
@@ -195,6 +307,7 @@ class CircularLinkedList {
    *
    * @param {number} fromId - the ID of an existing pointer to copy
    * @returns {number} - the ID of the new pointer
+   * @throws {Error} - if `fromId` is not a valid pointer ID
    */
   createPointer(fromId = 0) {
     this.#pointers.set(this.#nextPointerId, this.#pointers.get(fromId));
@@ -206,20 +319,20 @@ class CircularLinkedList {
    * left untouched. An `Error` will be thrown if you attempt to delete pointer
    * 0.
    *
-   * @param {number} pointerId - the ID of the pointer to delete
+   * @param {number} id - the ID of the pointer to delete
    * @throws {Error} - if `pointerId` is not a valid pointer ID
    * @throws {Error} - if `pointerId` is `0`
    */
-  deletePointer(pointerId) {
-    if (pointerId === 0) {
+  deletePointer(id) {
+    if (id === 0) {
       throw new Error('Cannot delete pointer 0');
     }
 
-    if (!this.#pointers.has(pointerId)) {
-      throw new Error(`No pointer with ID ${pointerId}`);
+    if (!this.#pointers.has(id)) {
+      throw new Error(`No pointer with ID ${id}`);
     }
 
-    this.#pointers.delete(pointerId);
+    this.#pointers.delete(id);
   }
 
   /**
@@ -303,6 +416,25 @@ class CircularLinkedList {
     }
 
     this.#size++;
+  }
+
+  /**
+   * Returns an array containing the IDs of all pointers which are currently
+   * pointing at the given node.
+   *
+   * @param {Object} node - the node to query for
+   * @returns {Array} - the IDs of the pointers at this node
+   */
+  #findPointersAt(node) {
+    const pointers = [];
+
+    for (let [id, pointingAt] of this.#pointers) {
+      if (pointingAt === node) {
+        pointers.push(id);
+      }
+    }
+
+    return pointers;
   }
 }
 

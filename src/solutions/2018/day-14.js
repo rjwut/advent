@@ -99,7 +99,7 @@ const run = (seed, input) => {
       // We've generated enough recipes, go back and get them
       const part1pointer = recipes.createPointer();
       recipes.rotate(part1target - recipes.size - 9, part1pointer);
-      part1 = recipes.subsequence(10, part1pointer).join('');
+      part1 = recipes.sequence(10, part1pointer).join('');
       recipes.deletePointer(part1pointer);
     }
 

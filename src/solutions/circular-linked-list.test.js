@@ -75,13 +75,112 @@ describe('CircularLinkedList', () => {
     expect(list.peek(pointer1)).toBe(2);
   });
 
-  test('subsequence()', () => {
+  test('clear()', () => {
+    const list = new CircularLinkedList([ 1, 2, 3 ]);
+    const pointer1 = list.createPointer();
+    list.rotate(1, pointer1);
+    list.clear();
+    expect(list.empty).toBe(true);
+    expect(() => list.peek(pointer1)).toThrow(`No pointer with ID ${pointer1}`);
+  });
+
+  test('sequence()', () => {
     const list = new CircularLinkedList([ 1, 2, 3, 4, 5, 6, 7 ]);
     const pointer1 = list.createPointer();
     list.rotate(4);
-    expect(list.subsequence(8)).toEqual([ 5, 6, 7, 1, 2, 3, 4, 5 ]);
-    expect(list.subsequence(3, pointer1, true))
+    expect(list.sequence(8)).toEqual([ 5, 6, 7, 1, 2, 3, 4, 5 ]);
+    expect(list.sequence(3, pointer1, true))
       .toEqual([ 1, 7, 6 ]);
+  });
+
+  describe('splice()', () => {
+    test('Inserting in an empty list', () => {
+      const list = new CircularLinkedList();
+      expect(list.splice(0, [ 1, 2, 3 ])).toHaveLength(0);
+      expect(list.size).toBe(3);
+      expect([ ...list ]).toEqual([ 1, 2, 3 ]);
+    });
+
+    test('Inserting in a non-empty list, no removes', () => {
+      const list = new CircularLinkedList([ 1, 2, 3 ]);
+      expect(list.splice(0, [ 4, 5, 6 ])).toHaveLength(0);
+      expect(list.size).toBe(6);
+      expect([ ...list ]).toEqual([ 4, 5, 6, 1, 2, 3 ]);
+    });
+
+    test('Removing all elements, no inserts', () => {
+      const list = new CircularLinkedList([ 1, 2, 3 ]);
+      expect(list.splice(3)).toEqual([ 1, 2, 3 ]);
+      expect(list.size).toBe(0);
+      expect([ ...list ]).toEqual([]);
+    });
+
+    test('Removing some elements, no inserts', () => {
+      const list = new CircularLinkedList([ 1, 2, 3, 4, 5 ]);
+      expect(list.splice(2)).toEqual([ 1, 2 ]);
+      expect(list.size).toBe(3);
+      expect([ ...list ]).toEqual([ 3, 4, 5 ]);
+    });
+
+    test('Replacing all elements', () => {
+      const list = new CircularLinkedList([ 1, 2, 3 ]);
+      expect(list.splice(3, [ 4, 5, 6 ])).toEqual([ 1, 2, 3 ]);
+      expect(list.size).toBe(3);
+      expect([ ...list ]).toEqual([ 4, 5, 6 ]);
+    });
+
+    test('Replacing some elements', () => {
+      const list = new CircularLinkedList([ 1, 2, 3, 4, 5 ]);
+      expect(list.splice(2, [ 6, 7, 8 ])).toEqual([ 1, 2 ]);
+      expect(list.size).toBe(6);
+      expect([ ...list ]).toEqual([ 6, 7, 8, 3, 4, 5 ]);
+    });
+
+    test('Handle pointers at removed elements', () => {
+      const list = new CircularLinkedList([ 1, 2, 3, 4, 5 ]);
+      const pointer1 = list.createPointer();
+      list.rotate(1, pointer1);
+      const pointer2 = list.createPointer();
+      list.rotate(2, pointer2);
+      const pointer3 = list.createPointer();
+      list.rotate(-1, pointer3);
+      list.splice(3, [ 6 ]);
+      expect(list.peek()).toBe(6);
+      expect(list.peek(pointer1)).toBe(6);
+      expect(list.peek(pointer2)).toBe(6);
+      expect(list.peek(pointer3)).toBe(5);
+    });
+
+    test('Handle multiple pointers when all elements are removed without replacement', () => {
+      const list = new CircularLinkedList([ 1, 2, 3 ]);
+      const pointer1 = list.createPointer();
+      list.rotate(1, pointer1);
+      list.splice(3);
+      expect(list.peek()).toBe(undefined);
+      expect(list.peek(pointer1)).toBe(undefined);
+    });
+
+    test('Handle multiple pointers when all elements are replaced', () => {
+      const list = new CircularLinkedList([ 1, 2, 3 ]);
+      const pointer1 = list.createPointer();
+      list.rotate(1, pointer1);
+      list.splice(3, [ 4, 5, 6 ]);
+      expect(list.peek()).toBe(4);
+      expect(list.peek(pointer1)).toBe(4);
+    });
+
+    test('Nothing changes if no elements are inserted or removed', () => {
+      const list = new CircularLinkedList([ 1, 2, 3 ]);
+      const pointer1 = list.createPointer();
+      list.rotate(1, pointer1);
+      const pointer2 = list.createPointer();
+      list.rotate(2, pointer2);
+      list.splice(0);
+      expect(list.size).toBe(3);
+      expect([ ...list ]).toEqual([ 1, 2, 3 ]);
+      expect(list.peek(pointer1)).toBe(2);
+      expect(list.peek(pointer2)).toBe(3);
+    });
   });
 
   test('Creating and deleting pointers', () => {

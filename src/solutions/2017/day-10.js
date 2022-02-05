@@ -1,5 +1,5 @@
-const CircularLinkedList = require('../circular-linked-list');
 const { split } = require('../util');
+const knotHash = require('./knot-hash');
 
 const DEFAULT_SIZE = 256;
 
@@ -74,7 +74,7 @@ module.exports = (input, part, size = DEFAULT_SIZE) => {
  */
 const part1 = (input, size) => {
   const lengths = split(input, { delimiter: ',', parseInt: true });
-  const results = run(lengths, 1, size);
+  const results = knotHash.computeSparseHash(lengths, 1, size);
   const [ a, b ] = results;
   return a * b;
 };
@@ -85,67 +85,4 @@ const part1 = (input, size) => {
  * @param {string} input - the puzzle input
  * @returns {number} - the puzzle answer
  */
-const part2 = input => {
-  input = [ ...input.trim() ].map(c => c.charCodeAt(0));
-  const lengths = [
-    ...input,
-    ...[ 17, 31, 73, 47, 23 ],
-  ];
-  const results = run(lengths, 64);
-  return computeHash(results);
-};
-
-/**
- * Processes the circle using the specified lengths and number of rounds.
- *
- * @param {Array} lengths - the lengths to process
- * @param {number} rounds - the number of rounds to perform
- * @param {number} size - the size of the circle
- * @returns {Array} - the resulting list
- */
-const run = (lengths, rounds, size) => {
-  const numbers = new Array(size);
-
-  for (let i = 0; i < size; i++) {
-    numbers[i] = i;
-  }
-
-  const circle = new CircularLinkedList(numbers);
-  const start = circle.createPointer();
-  let skip = 0;
-
-  for (let i = 0; i < rounds; i++) {
-    for (const length of lengths) {
-      const sequence = circle.sequence(length);
-      const index = sequence.indexOf(circle.peek(start));
-      circle.splice(length, sequence.reverse());
-  
-      if (index > 0) {
-        circle.rotate(index, start);
-      }
-  
-      circle.rotate(length + skip++);
-    }
-  }
-
-  return [ ...circle.iterator(start) ];
-};
-
-/**
- * Computes the knot hash of the specified list.
- *
- * @param {Array} numbers - the values to hash
- * @returns {string} - the hash
- */
-const computeHash = numbers => {
-  const denseHash = numbers.reduce((hash, number, i) => {
-    if (i % 16 === 0) {
-      hash.push(number);
-    } else {
-      hash[hash.length - 1] ^= number;
-    }
-
-    return hash;
-  }, []);
-  return denseHash.map(hash => hash.toString(16).padStart(2, '0')).join('');
-};
+const part2 = input => knotHash(input.trim());

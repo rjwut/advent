@@ -128,9 +128,6 @@ const SWITCH_COST = 7;
  * target region with the climbing gear equipped has just one edge leading to
  * the one with the torch equipped.
  *
- * TODO The solution takes about 15 seconds to run on my machine. That's...
- * okay, but it could be better.
- *
  * @param {string} input - the puzzle input
  * @returns {Array} - the puzzle answers
  */

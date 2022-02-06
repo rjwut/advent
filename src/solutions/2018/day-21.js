@@ -65,10 +65,9 @@ const { parse, buildVm } = require('./elfcode');
  * 8. The last value inserted in the `Set` before the repeated value occurs is
  *    the answer to part two.
  *
- * TODO This takes approximately 54 seconds to run on my machine; longer than I
- * would like. I could re-implement the Elfcode program in JavaScript so that I
- * could run it faster, but this would increase the likelihood of my solution
- * not working for other inputs.
+ * TODO This takes almost a minute to run on my machine. I could re-implement
+ * the Elfcode program in JavaScript so that I could run it faster, but this
+ * would increase the likelihood of my solution not working for other inputs.
  *
  * @param {string} input - the puzzle input
  * @returns {Array} - the puzzle answers

@@ -7,7 +7,24 @@ const PHASE_SETTINGS = [
 ];
 
 /**
- * @todo Implement
+ * There are two things that differ between the two parts:
+ *
+ * - The phase settings (`0` - `4` for part one, `5` - `9` for part two)
+ * - The amplifiers are arranged in a feedback loop for part two
+ *
+ * Part one can actually be done in the feedback loop configuration, since the
+ * program will terminate at the right time in part one anyway. So I created a
+ * `findMaxSignal()` function that accepts the program and the available phase
+ * settings, and returns the maximum signal. It does this by simply trying all
+ * possible permutations of phase settings (the `permute()` function from my
+ * `util` module makes this easy), and keeping track of the largest resulting
+ * signal.
+ *
+ * The `tryPermutation()` function is responsible for computing the resulting
+ * signal for a permutaiton. It spins up five new amplifiers and runs them
+ * until the last one terminates, keeping track of the output signal from each
+ * one as it goes so that it can be provided as the input for the next
+ * amplifier. When the last amplifier terminates, the signal is returned.
  *
  * @param {string} input - the puzzle input
  * @param {number} [part] - the part whose answer should be returned
@@ -24,6 +41,14 @@ module.exports = (input, part) => {
   ));
 };
 
+/**
+ * Returns the maximum signal that can be produced by any permutation of the
+ * given phase settings.
+ *
+ * @param {string} program - the amplifier program
+ * @param {Array} phaseSettings - the phase settings to try
+ * @returns {number} - the maximum signal
+ */
 const findMaxSignal = (program, phaseSettings) => {
   const permutations = permute(phaseSettings);
   let max = -Infinity;
@@ -36,6 +61,13 @@ const findMaxSignal = (program, phaseSettings) => {
   return max;
 };
 
+/**
+ * Returns the signal produced by the given permutation of phase settings.
+ *
+ * @param {string} program - the amplifier program
+ * @param {Array} permutation - the phase settings permutation to try
+ * @returns {number} - the resulting signal
+ */
 const tryPermutation = (program, permutation) => {
   const amplifiers = [];
 

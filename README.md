@@ -116,9 +116,19 @@ I repeat the procedure for part two of the day's puzzle. Often part two will rev
 
 Sometimes a solution is complex enough that I find it useful to break it apart into more modules, which allows me to develop and test each part independently. These sub-modules will have an additional descriptive suffix added to the filename, like `day-20.grid.js` and `day-20.grid.test.js`. The main solution module can then import the sub-modules and use them to solve the puzzle.
 
-After I have solved each day's puzzle, I go back in and clean up the code, refactoring as needed to improve readability and reuse, and add the documentation. The comments for each day's module will describe the solution algorithm. In more complicated cases, I may divide that description up across the documentation for the various functions in the solution, but in that case the main documentation for the module will always describe where to look for the details.
+After I have solved each day's puzzle, I will go back and make improvements:
 
-Sometimes the same code may be reused across multiple puzzles. If it's just for a single year, I will put that code in a module under `src/solutions/{year}`. The Intcode interpreter used repeatedly in 2019 is a great example of this; you can find it at `src/solutions/2019/intcode.js`. If it's a utility that is generally useful for any Advent of Code year, it will be located under `src/solutions` instead.
+- I take a look at performance. The `npm start` script will time each solution run and print the elapsed time for running both parts to the console. It's normally printed in gray, but turns yellow if it takes at least five seconds to run, and red if it takes at least 15 seconds.
+  - My general rule of thumb is that any solution that runs in less than a second on my machine probably doesn't need to be sped up, unless it's a really low-hanging fruit.
+  - If a solution runs in less than five seconds, I'm usually happy with that, but if I see a way to speed it up that doesn't add much in the way of complexity, I'll probably do it.
+  - If a solution takes at least five seconds to run, I will definitely spend some time considering how to speed it up, and will be more willing to accept increased complexity as a tradeoff. However, I will still consider it acceptable if I don't think of a good way to improve it.
+  - If a solution takes at least 15 second to run, I consider that to mean that my solution is unacceptably "brute force" and that I may need to completely reconsider my approach. However, some of them are really hard and in some cases I've relucatantly left them alone as long as they produce the correct answer.
+  - All solutions that take at least five seconds to run are listed in the **TODO** section below.
+- I refactor code as needed to improve readability and testability.
+- I add documentation. The comments for each day's module will describe the solution algorithm. In more complicated cases, I may divide that description up across the documentation for the various functions in the solution, but in that case the main documentation for the module will always describe where to look for the details.
+- Somtimes I'll identify some piece of code as being useful across multiple puzzles and refactor it into a separate module.
+  - If the code would only be useful for that year, I will put the module under `src/solutions/{year}`. The Intcode interpreter used repeatedly in 2019 is a great example of this; you can find it at `src/solutions/2019/intcode.js`.
+  - If it's a utility that is generally useful for any Advent of Code year, it will be located under `src/solutions` instead.
 
 ## Utility Classes and Functions
 
@@ -162,3 +172,17 @@ This class is useful for quickly calculating the sum of all values in a rectangu
 ### `util`
 
 Miscellaneous utility functions.
+
+## TODO
+
+Things I'd like to improve:
+
+- Make code generator script intelligently select the year and day when omitted
+- 2019-25: Try combinations of inventory items using [Gray code](https://en.wikipedia.org/wiki/Gray_code)
+- 2021-05: Re-use the `InfiniteGrid` class
+- Long runtimes:
+  - 2018-21: 57.588 s
+  - 2018-22: 22.599 s
+  - 2018-14: 15.992 s
+  - 2019-18: 15.733 s
+  - 2018-03: 7.816 s

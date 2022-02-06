@@ -1,3 +1,4 @@
+const { performance } = require('perf_hooks');
 const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
@@ -13,7 +14,15 @@ const GREEN = ansi(ansi.FG_GREEN, ansi.BOLD);
 const RED = ansi(ansi.FG_RED, ansi.BOLD);
 const RESET = ansi(ansi.RESET);
 const YELLOW = ansi(ansi.FG_YELLOW, ansi.BOLD);
+const GRAY = ansi(ansi.FG_BLACK, ansi.BOLD);
+const LONG_RUNTIME_MS = 5_000;
+const VERY_LONG_RUNTIME_MS = 15_000;
 
+/**
+ * Prints out an error message and exits the process.
+ *
+ * @param {string} msg - the message to display
+ */
 const fail = msg => {
   console.error(`${RED}${msg}${RESET}`);
   process.exit(1);
@@ -36,7 +45,8 @@ const run = async () => {
     // No arguments, run the most recent day of the most recent year
     year = validYears[validYears.length - 1];
     day = await getLastDayForYear(year);
-  } else if (args[0] !== '*') { // Either a year, a day, or both has been specified
+  } else if (args[0] !== '*') {
+    // Either a year, a day, or both has been specified
     if (args.length === 1) {
       // One argument:
       // If it's an asterisk, run all days of all years.
@@ -173,9 +183,29 @@ const runDay = async (year, day) => {
   const input = await fetchInput(year, day);
   const dayModule = require(`../solutions/${year}/${moduleName}`);
   process.stdout.write(`Day ${YELLOW}${day.padStart(2, ' ')}${RESET}`);
+  const start = performance.now();
   const answers = await dayModule(input);
+  const elapsedMs = performance.now() - start;
+  let elapsedStr, elapsedColor = GRAY;
+
+  if (elapsedMs < 1000) {
+    // Less than a second; render elapsed time in microseconds
+    elapsedStr = Math.round(elapsedMs * 1000).toLocaleString() + ' μs';
+  } else {
+    // Render elapsed time in seconds, yellow if more than 5 and red if more than 15
+    elapsedStr = (elapsedMs / 1000).toLocaleString(undefined, {
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3,
+    }) + ' s';
+
+    if (elapsedMs >= LONG_RUNTIME_MS) {
+      elapsedColor = elapsedMs < VERY_LONG_RUNTIME_MS ? YELLOW : RED;
+    }
+  }
+
   process.stdout.write(`, part ${YELLOW}1${RESET}: ${GREEN}${answers[0]}${RESET}\n`);
   process.stdout.write(`        part ${YELLOW}2${RESET}: ${GREEN}${answers[1]}${RESET}\n`);
+  process.stdout.write(`                ${elapsedColor}${elapsedStr}${RESET}\n`);
 }
 
 run();

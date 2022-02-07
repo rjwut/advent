@@ -98,7 +98,7 @@ const Util = {
     case 'object':
       coercions = Object.entries(coerce);
       coerce = record => {
-        coercions.forEach(([ key, fn]) => {
+        coercions.forEach(([ key, fn ]) => {
           record[key] = fn(record[key]);
         });
         return record;
@@ -114,7 +114,7 @@ const Util = {
     }
 
     return [ ...string.matchAll(regexp) ]
-      .map(match => coerce(match.groups));
+      .map((match, i) => coerce(match.groups, i));
   },
 
   /**

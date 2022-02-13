@@ -76,7 +76,7 @@ const Util = {
    * following `coerce` object:
    *
    * ```js
-   * { index: str => parseInt(str, 10) }
+   * { index: Number }
    * ```
    *
    * You may also specify a function for `coerce`, in which case the entire

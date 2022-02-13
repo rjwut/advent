@@ -24,6 +24,24 @@ const Math2 = {
   gcd: (a, b) => b ? Math2.gcd(b, a % b) : Math.abs(a),
 
   /**
+   * Determines whether `n` is prime.
+   *
+   * @param {number} n - the number to test
+   * @returns {boolean} - whether `n` is prime
+   */
+  isPrime: n => {
+    const limit = Math.sqrt(n);
+
+    for (let i = 2; i <= limit; i++) {
+      if (n % i === 0) {
+        return false;
+      }
+    }
+
+    return true;
+  },
+
+  /**
    * Returns the least common multiple of the two arguments.
    *
    * @param {number} a - an integer

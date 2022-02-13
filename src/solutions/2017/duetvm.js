@@ -7,6 +7,9 @@ const COMMON_OPERATIONS = {
   add: (ctx, args) => {
     ctx.setReg(args[0], ctx.getReg(args[0]) + ctx.evaluate(args[1]));
   },
+  sub: (ctx, args) => {
+    ctx.setReg(args[0], ctx.getReg(args[0]) - ctx.evaluate(args[1]));
+  },
   mul: (ctx, args) => {
     ctx.setReg(args[0], ctx.getReg(args[0]) * ctx.evaluate(args[1]));
   },
@@ -15,6 +18,11 @@ const COMMON_OPERATIONS = {
   },
   jgz: (ctx, args) => {
     if (ctx.evaluate(args[0]) > 0) {
+      ctx.ip += ctx.evaluate(args[1]) - 1;
+    }
+  },
+  jnz: (ctx, args) => {
+    if (ctx.evaluate(args[0]) !== 0) {
       ctx.ip += ctx.evaluate(args[1]) - 1;
     }
   },
@@ -48,9 +56,13 @@ const OPERATIONS = [
 
 /**
  * Implementation of the "Duet VM" as described in the puzzle for
- * [Day 18](https://adventofcode.com/2017/day/18). This VM supports both the
- * "wrong" version described in part one (referred to here as version 0) and
- * the "correct" version in part two (version 1):
+ * [Day 18](https://adventofcode.com/2017/day/18) and
+ * [Day 23](https://adventofcode.com/2017/day/23). This VM supports both the
+ * "wrong" version described in part one of Day 18 (referred to here as version
+ * 0) and the "correct" version in part two (version 1). Since Day 23 makes
+ * only additive changes to the Duet language. Only the `snd` and `rcv`
+ * instructions are different between the two versions; all other instructions
+ * are supported by both versions.
  *
  * ## Version 0
  *
@@ -132,7 +144,11 @@ module.exports = (program, version = 1) => {
     input: [],
     output: [],
     state: 'ready',
+    instructionCounts: new Map(),
   };
+  Object.keys(operations).forEach(op => {
+    ctx.instructionCounts.set(op, 0);
+  });
 
   /**
    * Pushes a value onto the input queue.
@@ -161,6 +177,7 @@ module.exports = (program, version = 1) => {
     do {
       const { op, args } = program[ctx.ip];
       operations[op](ctx, args);
+      ctx.instructionCounts.set(op, ctx.instructionCounts.get(op) + 1);
 
       if (ctx.state !== 'blocked') {
         ctx.ip++;
@@ -205,6 +222,7 @@ module.exports = (program, version = 1) => {
      * @returns {string} - the current VM state
      */
     getState: () => ctx.state,
+    getInstructionCount: op => ctx.instructionCounts.get(op),
   };
 };
 

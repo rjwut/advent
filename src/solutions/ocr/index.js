@@ -29,11 +29,13 @@ const fonts = new Map(); // font cache
  *   width.
  * - A glyph consists of a sequence of columns, where each column contains at
  *   least one lit pixel.
- * - Glyphs are separated by at least one column of unlit pixels.
- * - A font matches a unique glyph pattern to a unique translated character.
- * - A single glyph block will all be from the same font.
+ * - A single glyph block will have exactly one font.
  * - Each font has a unique height, therefore the height of the glyph block can
  *   be used to identify which font to use.
+ * - A font's glyphs can have different widths. A glyph is terminated either by
+ *   a blank column or when the number of columns in the glyph reaches the
+ *   maximum number of columns of any glyph in the font.
+ * - A font matches a unique glyph pattern to a unique translated character.
  * - If a glyph pattern is not recognized, it translates to `?`. Any
  *   translation containing a `?` character is not considered accurate.
  * - Extra horizontal space before the first glyph, after the last glyph, or
@@ -75,7 +77,10 @@ module.exports = async (block, pixelChar = '#') => {
  * Returns a `Map` that associates a glyph hash with a character. The font file
  * consists of a line containing all the possible translated characters,
  * followed by a glyph block containing the corresponding glyphs in the same
- * order, using `#` for lit pixels.
+ * order, using `#` for lit pixels. Since the maximum width of a glyph is
+ * unknown while loading the font file, all glyphs must be separated by a blank
+ * column of pixels. The returned `Map` will have a `maxWidth` property that
+ * gives the maximum width of any glyph in the font.
  *
  * @param {string} name - the name of the font to load
  * @returns {Map} - the glyph map
@@ -88,11 +93,13 @@ const loadFont = async name => {
     const data = await fs.readFile(file, 'utf8');
     let lines = data.split('\n');
     const letters = lines[0];
-    lines = lines.slice(1);
-    font = hashLines(lines, '#').reduce((glyphs, hash, i) => {
+    lines.splice(0, 1);
+    const hashes = hashLines(lines, '#');
+    font = hashes.reduce((glyphs, hash, i) => {
       glyphs.set(hash, letters[i]);
       return glyphs;
     }, new Map());
+    font.maxWidth = hashes.maxWidth;
     fonts.set(name, font);
   }
 
@@ -108,26 +115,33 @@ const loadFont = async name => {
  * the ASCII font
  * @returns {string} - the recognized characters
  */
-const recognize = (lines, font, pixelChar) => hashLines(lines, pixelChar)
+const recognize = (lines, font, pixelChar) => hashLines(lines, pixelChar, font.maxWidth)
   .map(hash => font.get(hash) || '?')
   .join('');
 
 /**
  * Each glyph is represented by a hash of the concatenated columns of
  * characters that make it up. This function accepts an array of lines from a
- * glyph block and returns an array containing the hash for each glyph.
+ * glyph block and returns an array containing the hash for each glyph. The
+ * returned array will have one additional property:
+ *
+ * - `maxWidth` (number): The maximum width of any glyph found in the glyph
+ *   block.
  *
  * @param {Array} lines - an array of lines from the glyph block
  * @param {string} pixelChar - the character that represents a lit pixel in the
  * font
+ * @param {number} [maxWidth] - the maximum widht of a glyph; if omitted, all
+ * glyphs must be separated by at least one column of blank pixels
  * @returns {Array} - an array of resulting hashes
  */
-const hashLines = (lines, pixelChar) => {
+const hashLines = (lines, pixelChar, maxWidth) => {
   const length = lines.reduce(
     (max, line) => Math.max(max, line.length), 0
   );
   let columns = [];
   const hashes = [];
+  hashes.maxWidth = 0;
 
   /**
    * The `columns` variable is an array of strings, where each string is a
@@ -140,6 +154,7 @@ const hashLines = (lines, pixelChar) => {
     const hash = crypto.createHash('md5');
     hash.update(columns.join('\n'));
     hashes.push(hash.digest('base64'));
+    hashes.maxWidth = Math.max(hashes.maxWidth, columns.length);
     columns = [];
   };
 
@@ -151,13 +166,14 @@ const hashLines = (lines, pixelChar) => {
     }
 
     column = column.join('');
+    const emptyColumn = column.trim() === '';
 
-    if (column.trim() === '') {
-      if (columns.length) {
-        hashGlyph(); // end of glyph
-      }
-    } else {
+    if (!emptyColumn) {
       columns.push(column);
+    }
+
+    if (emptyColumn && columns.length || columns.length === maxWidth) {
+      hashGlyph(); // end of glyph
     }
   }
 

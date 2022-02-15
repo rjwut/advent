@@ -1,7 +1,7 @@
 const ocr = require('.');
 
 const TEST_CASES = [
-  {
+  { // normal case
     input: ` ##   ##   ## 
 #  # #  # #  #
 #  # #  # #   
@@ -10,7 +10,16 @@ const TEST_CASES = [
 #  #  ##   ## `,
     output: 'AOC',
   },
-  {
+  { // max width glyph not followed by blank column
+    input: `#   # .##
+#   #   #
+ # #    #
+  #     #
+  #  #  #
+  #   ## `,
+    output: 'YJ',
+  },
+  { // unknown glyph
     input: ` ##   ##   ## 
 #  # #  # #  #
 ## # #  # #   
@@ -19,7 +28,7 @@ const TEST_CASES = [
 #  #  ##   ## `,
     output: '?OC',
   },
-  {
+  { // I/O error
     input: 'foo',
     error: 'ENOENT',
   }

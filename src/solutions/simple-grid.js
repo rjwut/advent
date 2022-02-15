@@ -91,6 +91,27 @@ class SimpleGrid {
   }
 
   /**
+   * Populates all elements in the given rectangular region with the indicated
+   * value.
+   *
+   * @param {number} r0 - the row of the region's upper-left corner
+   * @param {number} c0 - the column of the region's upper-left corner
+   * @param {number} w - the region width
+   * @param {number} h - the region height
+   * @param {*} value - the value to populate
+   */
+  fill(r0, c0, w, h, value) {
+    const r1 = r0 + h;
+    const c1 = c0 + w;
+
+    for (let r = r0; r < r1; r++) {
+      const i0 = this.#getIndex(r, c0);
+      const i1 = this.#getIndex(r, c1);
+      this.#grid.fill(value, i0, i1);
+    }
+  }
+
+  /**
    * Iterates all the values in the grid, in row-major order.
    *
    * @returns {Iterator} - the `Iterator` instance
@@ -167,6 +188,16 @@ class SimpleGrid {
         callback(this.#grid[this.#getIndex(r, c)], r, c, i++);
       }
     }
+  }
+
+  /**
+   * Returns the number of elements which match the given predicate.
+   *
+   * @param {Function} predicate - the predicate to use to test elements
+   * @returns {number} - the number of elements which match the predicate
+   */
+  count(predicate) {
+    return this.#grid.filter(predicate).length;
   }
 
   /**
@@ -325,6 +356,65 @@ class SimpleGrid {
     }
 
     return new SimpleGrid({ [INTERNAL]: true, grid, rows, cols });
+  }
+
+  /**
+   * Shifts the elements in the indicated row of the grid to the right by the
+   * given number of positions (or left if `amount` is negative). Elements that
+   * are pushed off the edge of the grid "wrap around" to the other side.
+   *
+   * @param {number} r - the row to shift
+   * @param {number} amount - the number of positions to shift the elements
+   */
+  shiftRow(r, amount) {
+    if (amount === 0) {
+      return;
+    }
+
+    amount = Math.sign(amount) * (Math.abs(amount) % this.#cols);
+    const rowStart = this.#getIndex(r, 0);
+    const rowEnd = rowStart + this.#cols;
+
+    if (amount > 0) {
+      const shiftedOff = this.#grid.splice(rowEnd - amount, amount);
+      this.#grid.splice(rowStart, 0, ...shiftedOff);
+    } else {
+      const shiftedOff = this.#grid.splice(rowStart, -amount);
+      this.#grid.splice(rowEnd + amount, 0, ...shiftedOff);
+    }
+  }
+
+  /**
+   * Shifts the elements in the indicated column of the grid down by the given
+   * number of positions (or up if `amount` is negative). Elements that are
+   * pushed off the edge of the grid "wrap around" to the other side.
+   *
+   * @param {number} c - the column to shift
+   * @param {number} amount - the number of positions to shift the elements
+   */
+  shiftColumn(c, amount) {
+    if (amount === 0) {
+      return;
+    }
+
+    amount = Math.sign(amount) * (Math.abs(amount) % this.#rows);
+    const column = new Array(this.#rows);
+
+    for (let i = 0; i < this.#rows; i++) {
+      column[i] = this.#grid[this.#getIndex(i, c)];
+    }
+
+    if (amount > 0) {
+      const shiftedOff = column.splice(column.length - amount, amount);
+      column.splice(0, 0, ...shiftedOff);
+    } else {
+      const shiftedOff = column.splice(0, -amount);
+      column.splice(column.length, 0, ...shiftedOff);
+    }
+
+    for (let i = 0; i < this.#rows; i++) {
+      this.#grid[this.#getIndex(i, c)] = column[i];
+    }
   }
 
   /**

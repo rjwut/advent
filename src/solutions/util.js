@@ -99,7 +99,11 @@ const Util = {
       coercions = Object.entries(coerce);
       coerce = record => {
         coercions.forEach(([ key, fn ]) => {
-          record[key] = fn(record[key]);
+          const value = record[key];
+
+          if (value !== undefined) {
+            record[key] = fn(value);
+          }
         });
         return record;
       };

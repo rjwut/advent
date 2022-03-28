@@ -141,7 +141,7 @@ class PriorityQueue {
    * @returns {boolean} - whether the element was present in the queue
    */
   remove(element) {
-    const index = this.indexOf(element);
+    const index = this.#items.indexOf(element);
 
     if (index === -1) {
       return false;

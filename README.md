@@ -20,7 +20,9 @@ To enable automatic input download, run:
 npm run session {session-cookie}
 ```
 
-...where `session-cookie` is the value of your `session` cookie from the Advent of Code web site. Otherwise, you must download your input manually and save it under `input/{year}/{day}.txt`. If your session cookie changes, you will need to run this command again.
+...where `session-cookie` is the value of your `session` cookie from the Advent of Code web site. If your session cookie changes, you will need to run the command again.
+
+If you'd rather provide your input manually, you must sotre it as `input/{year}/{day}.txt`.
 
 ## Usage
 
@@ -81,7 +83,7 @@ npm test
 Run the interactive program from 2019 day 25:
 
 ```bash
-npm start 2019-25
+npm run 2019-25
 ```
 
 ## Project Structure
@@ -91,9 +93,9 @@ npm start 2019-25
   - Some solutions are complex enough that I've broken them apart into multiple modules. The support modules for a single day's puzzle will have names like `src/solutions/{year}/day-{day}.{submodule}.js`.
   - Sometimes code gets reused across multiple days in the same year, like the Intcode interpreter in 2019. In that case, the module will be found at `src/solutions/{year}/{name}.js` (no `day-` prefix).
 - **Utility code**: Some code is techically part of the solution code, but it is generally useful for Advent of Code regardless of the year. These are found under `src/solutions` rather than under the directory for a specific year.
-- **Framework code**: This is code that isn't actually part of the solutions, but is support code to generate or run the solutions. These are found under `src/framework`.
+- **Framework code**: This is code that isn't actually part of the solutions themselves, but is support code to generate or run the solutions. These are found under `src/framework`.
 - **Test code**: These are unit tests, found adjacent to the code they test. They end with `.test.js` instead of just `.js`.
-- **Input files**: These are files that the framework code reads to execute the solutions. They are found under the `input` directory. This directory is empty (apart from a small `README.md` file) in the repository because they are unique per user. When the framework fetches your input for a puzzle from the Advent of Code, it will automatically create a cache file containing the input at `input/{year}/{day}.txt`. This way, it never has to retrieve it from the site again. To enable this, you must provide your Advent of Code session cookie to the framework by running `npm run session {cookie-value}`. (The cookie value is stored in `input/.session`.) As long as your session remains valid, you only have to this once. If you'd prefer, you can retrieve your input yourself and store it as described rather than let the framework fetch it for you.
+- **Input files**: These are files that the framework code reads to execute the solutions. They are found under the `input` directory. This directory is empty (apart from a small `README.md` file) in the repository because they are unique per user. When the framework fetches your input for a puzzle from the Advent of Code site, it will automatically create a cache file containing the input at `input/{year}/{day}.txt`. This way, it never has to retrieve it from the site again. To enable this, you must provide your Advent of Code session cookie to the framework by running `npm run session {cookie-value}`. (The cookie value is stored in `input/.session`.) As long as your session remains valid, you only have to this once. If you'd prefer, you can retrieve your input yourself and store it as described rather than let the framework fetch it for you.
 
 ## Bootstrapping a Puzzle Solution
 
@@ -122,8 +124,8 @@ After I have solved each day's puzzle, I will go back and make improvements:
   - My general rule of thumb is that any solution that runs in less than a second on my machine probably doesn't need to be sped up, unless it's a really low-hanging fruit.
   - If a solution runs in less than five seconds, I'm usually happy with that, but if I see a way to speed it up that doesn't add much in the way of complexity, I'll probably do it.
   - If a solution takes at least five seconds to run, I will definitely spend some time considering how to speed it up, and will be more willing to accept increased complexity as a tradeoff. However, I will still consider it acceptable if I don't think of a good way to improve it.
-  - If a solution takes at least 15 second to run, I consider that to mean that my solution is unacceptably "brute force" and that I may need to completely reconsider my approach. However, some of them are really hard and in some cases I've relucatantly left them alone as long as they produce the correct answer.
-  - All solutions that take at least five seconds to run are listed in the **TODO** section below.
+  - If a solution takes at least 15 seconds to run, I consider that to mean that my solution is unacceptably "brute force" and that I may need to completely reconsider my approach. However, some of them are really hard and in some cases I've relucatantly left them alone as long as they produce the correct answer.
+  - All solutions that take at least five seconds to run on my machine are listed in the **TODO** section below.
 - I refactor code as needed to improve readability and testability.
 - I add documentation. The comments for each day's module will describe the solution algorithm. In more complicated cases, I may divide that description up across the documentation for the various functions in the solution, but in that case the main documentation for the module will always describe where to look for the details.
 - Somtimes I'll identify some piece of code as being useful across multiple puzzles and refactor it into a separate module.
@@ -133,6 +135,10 @@ After I have solved each day's puzzle, I will go back and make improvements:
 ## Utility Classes and Functions
 
 A bunch of modules that help with recurring tasks in Advent of Code are included under `src/solutions`:
+
+### `a-star`
+
+A generic implementation of the [A* algorithm](https://en.wikipedia.org/wiki/A*_search_algorithm).
 
 ### `infinite-grid` and `boolean-infinite-grid`
 
@@ -151,7 +157,7 @@ This module contains the `Bounds` class, which is used to represent the bounds o
 
 ### `circular-linked-list`
 
-This class is a data structure that keeps elements in a circular list. You can rotate the pointer around the list, inspect the element at the pointer, remove that element, or insert elements before or after that element. The advantage this class has over arrays is that insertions and removals are much less expensive, because there is no need to shift elements.
+This class is a data structure that keeps elements in a circular list. You can rotate the pointer around the list, inspect the element at the pointer, remove that element, or insert elements before or after that element. The advantage this class has over arrays is that insertions and removals are much less expensive, because there is no need to shift elements, and you don't need to write special code to deal with the fact that the list wraps around.
 
 ### `grid-to-graph`
 

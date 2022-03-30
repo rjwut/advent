@@ -4,7 +4,7 @@
   "description": "Advent of Code solutions by rjwut",
   "main": "./src/framework/index.js",
   "author": "rjwut",
-  "license": "ISC",
+  "license": "MIT",
   "engines": {
     "node": ">=16"
   },

@@ -1,38 +1,180 @@
 const { split } = require('../util')
 
 const REG_NAMES = new Set([ 'a', 'b', 'c', 'd' ]);
-const OPERATIONS = {
-  cpy: (ctx, args) => {
+
+/**
+ * The `cpy` operation.
+ *
+ * Arguments:
+ *
+ * 0. The value to copy (or the register containing it)
+ * 1. The register to copy to (instruction skipped if not a register)
+ *
+ * @param {Object} ctx - the VM's context
+ * @param {Array} args - the instruction arguments
+ * @returns {number} - the offset to apply to the instruction pointer
+ */
+const cpy = (ctx, args) => {
+  if (REG_NAMES.has(args[1])) {
     ctx.regs[args[1]] = ctx.valueOf(args[0]);
-    return 1;
-  },
-  inc: (ctx, args) => {
-    ctx.regs[args[0]]++;
-    return 1;
-  },
-  dec: (ctx, args) => {
-    ctx.regs[args[0]]--;
-    return 1;
-  },
-  jnz: (ctx, args) => {
-    return ctx.valueOf(args[0]) ? ctx.valueOf(args[1]) : 1;
-  },
+  }
+
+  return 1;
 };
 
-module.exports = input => {
-  const program = parse(input);
+/**
+ * The `inc` operation.
+ *
+ * Arguments:
+ *
+ * 0. The register to increment (instruction skipped if not a register)
+ *
+ * @param {Object} ctx - the VM's context
+ * @param {Array} args - the instruction arguments
+ * @returns {number} - the offset to apply to the instruction pointer
+ */
+const inc = (ctx, args) => {
+  if (REG_NAMES.has(args[0])) {
+    ctx.regs[args[0]]++;
+  }
+
+  return 1;
+};
+
+/**
+ * The `dec` operation.
+ *
+ * Arguments:
+ *
+ * 0. The register to decrement (instruction skipped if not a register)
+ *
+ * @param {Object} ctx - the VM's context
+ * @param {Array} args - the instruction arguments
+ * @returns {number} - the offset to apply to the instruction pointer
+ */
+const dec = (ctx, args) => {
+  if (REG_NAMES.has(args[0])) {
+    ctx.regs[args[0]]--;
+  }
+
+  return 1;
+};
+
+/**
+ * The `jnz` operation.
+ *
+ * Arguments:
+ *
+ * 0. The value which must be non-zero for a jump to occur (or the register
+ *    containing it)
+ * 1. The offset to jump by (or the register containing it)
+ *
+ * @param {Object} ctx - the VM's context
+ * @param {Array} args - the instruction arguments
+ * @returns {number} - the offset to apply to the instruction pointer
+ */
+const jnz = (ctx, args) => {
+  return ctx.valueOf(args[0]) ? ctx.valueOf(args[1]) : 1;
+};
+
+/**
+ * The `tgl` operation.
+ *
+ * Arguments:
+ *
+ * 0. The offset of the instruction to be toggled (or the register containing
+ *    it)
+ *
+ * @param {Object} ctx - the VM's context
+ * @param {Array} args - the instruction arguments
+ * @returns {number} - the offset to apply to the instruction pointer
+ */
+const tgl = (ctx, args) => {
+  const index = ctx.pointer + ctx.valueOf(args[0]);
+  const instruction = ctx.program[index];
+
+  if (instruction) {
+    instruction.op = TOGGLES[instruction.op];
+  }
+
+  return 1;
+};
+
+const OPERATIONS = { cpy, inc, dec, jnz, tgl };
+const TOGGLES = {
+  cpy: 'jnz',
+  inc: 'dec',
+  dec: 'inc',
+  jnz: 'cpy',
+  tgl: 'inc',
+};
+
+/**
+ * The Assembunny VM. This function returns an object representing the VM's
+ * API:
+ *
+ * - `ctx` (`Object`): The VM's context:
+ *   - `program` (`Array`): The parsed program
+ *   - `regs` (`Object`): The VM's registers
+ *   - `pointer` (`number`): The VM's instruction pointer
+ *   - `valueOf()`: A function that returns the value stored at the named
+ *     register (if the argument is a string), or the argument itself (if it's
+ *     not a string)
+ * - `patch()`: Replaces a range of instructions with a function
+ * - `run()`: Runs the program until it halts
+ *
+ * @param {string} source - the program source code
+ * @returns {Object} - the VM API
+ */
+module.exports = source => {
   const ctx = {
+    program: parse(source),
     regs: Object.fromEntries([ ...REG_NAMES ].map(key => [ key, 0 ])),
     pointer: 0,
+    /**
+     * If the argument is a string, it is presumed to be the name of a
+     * register, and this function returns the value stored in that register.
+     * Otherwise, it returns the argument itself.
+     *
+     * @param {*} value - the value to check
+     * @returns {number} - the resulting value
+     */
     valueOf: value => typeof value === 'string' ? ctx.regs[value] : value,
   };
   return {
     ctx,
-    run: () => run(program, ctx),
+    /**
+     * Patches the program by replacing a range of instructions with a
+     * function. When the instruction pointer reaches the starting instruction
+     * in the specified range, the patch function is executed instead, and the
+     * instruction pointer is moved to the first instruction after the range.
+     *
+     * @param {number} start - the index of the first instruction in the range
+     * @param {number} length - the number of instructions to replace
+     * @param {Function} fn - the function to run instead
+     */
+    patch: (start, length, fn) => {
+      ctx.program[start].patch = () => {
+        fn();
+        ctx.pointer += length;
+      };
+    },
+    run: () => run(ctx),
   };
 };
 
-const parse = input => split(input).map(line => {
+/**
+ * Returns an array of instruction objects representing the parsed program.
+ * Each instruction object has the following properties:
+ *
+ * - `op` (`string`): The operation name
+ * - `args` (`Array`): The operation arguments, with numeric values parsed as
+ *   numbers
+ *
+ * @param {string} source - the Assembunny source code
+ * @returns {Array} - the parsed program
+ */
+const parse = source => split(source).map(line => {
   const parts = line.split(' ');
   const args = parts.slice(1).map(arg => REG_NAMES.has(arg) ? arg: parseInt(arg, 10));
   return {
@@ -41,9 +183,19 @@ const parse = input => split(input).map(line => {
   };
 });
 
-const run = (program, ctx) => {
+/**
+ * Executes the program and updates the VM's context accordingly.
+ *
+ * @param {Object} ctx - the context object
+ */
+ const run = ctx => {
   do {
-    const instruction = program[ctx.pointer];
-    ctx.pointer += OPERATIONS[instruction.op](ctx, instruction.args);
-  } while (ctx.pointer >= 0 && ctx.pointer < program.length);
+    const instruction = ctx.program[ctx.pointer];
+
+    if (instruction.patch) {
+      instruction.patch();
+    } else {
+      ctx.pointer += OPERATIONS[instruction.op](ctx, instruction.args);
+    }
+  } while (ctx.pointer >= 0 && ctx.pointer < ctx.program.length);
 };

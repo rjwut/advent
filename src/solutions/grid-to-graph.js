@@ -7,8 +7,8 @@ const DIRECTIONS = [
 
 /**
  * Several Advent of Code puzzles require you to navigate through a maze-like
- * area in a two-dimensional grid. This module facilitates reading converting
- * such a grid to a graph. You may pass it a two-dimensional array of
+ * area in a two-dimensional grid. This module facilitates reading such a grid
+ * and converting it to a graph. You may pass it a two-dimensional array of
  * characters, or a multi-line string which will be split on newlines and
  * converted to a two-dimensional array.
  * 

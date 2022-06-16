@@ -100,13 +100,30 @@ const tgl = (ctx, args) => {
   return 1;
 };
 
-const OPERATIONS = { cpy, inc, dec, jnz, tgl };
+/**
+ * The `out` operation.
+ *
+ * Arguments:
+ *
+ * 0. The value to be output (or the register containing it)
+ *
+ * @param {Object} ctx - the VM's context
+ * @param {Array} args - the instruction arguments
+ * @returns {number} - the offset to apply to the instruction pointer
+ */
+const out = (ctx, args) => {
+  ctx.output.push(ctx.valueOf(args[0]));
+  return 1;
+};
+
+const OPERATIONS = { cpy, inc, dec, jnz, tgl, out };
 const TOGGLES = {
   cpy: 'jnz',
   inc: 'dec',
   dec: 'inc',
   jnz: 'cpy',
   tgl: 'inc',
+  out: 'inc',
 };
 
 /**
@@ -116,12 +133,14 @@ const TOGGLES = {
  * - `ctx` (`Object`): The VM's context:
  *   - `program` (`Array`): The parsed program
  *   - `regs` (`Object`): The VM's registers
- *   - `pointer` (`number`): The VM's instruction pointer
+ *   - `pointer` (number): The VM's instruction pointer
+ *   - `output` (`Array`): An array of any values output by the VM
  *   - `valueOf()`: A function that returns the value stored at the named
  *     register (if the argument is a string), or the argument itself (if it's
  *     not a string)
  * - `patch()`: Replaces a range of instructions with a function
  * - `run()`: Runs the program until it halts
+ * - `reset()`: Resets the VM to it initial state
  *
  * @param {string} source - the program source code
  * @returns {Object} - the VM API
@@ -129,8 +148,6 @@ const TOGGLES = {
 module.exports = source => {
   const ctx = {
     program: parse(source),
-    regs: Object.fromEntries([ ...REG_NAMES ].map(key => [ key, 0 ])),
-    pointer: 0,
     /**
      * If the argument is a string, it is presumed to be the name of a
      * register, and this function returns the value stored in that register.
@@ -141,7 +158,7 @@ module.exports = source => {
      */
     valueOf: value => typeof value === 'string' ? ctx.regs[value] : value,
   };
-  return {
+  const vm = {
     ctx,
     /**
      * Patches the program by replacing a range of instructions with a
@@ -159,8 +176,15 @@ module.exports = source => {
         ctx.pointer += length;
       };
     },
-    run: () => run(ctx),
+    run: breakCondition => run(ctx, breakCondition),
+    reset: () => {
+      ctx.regs = Object.fromEntries([ ...REG_NAMES ].map(key => [ key, 0 ]));
+      ctx.pointer = 0;
+      ctx.output = [];
+    },
   };
+  vm.reset();
+  return vm;
 };
 
 /**
@@ -187,9 +211,15 @@ const parse = source => split(source).map(line => {
  * Executes the program and updates the VM's context accordingly.
  *
  * @param {Object} ctx - the context object
+ * @param {Function} [breakCondition] - a predicate that will cause execution
+ * to halt if it ever returns `true`
  */
- const run = ctx => {
+ const run = (ctx, breakCondition) => {
   do {
+    if (breakCondition?.()) {
+      break;
+    }
+
     const instruction = ctx.program[ctx.pointer];
 
     if (instruction.patch) {

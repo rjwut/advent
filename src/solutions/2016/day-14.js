@@ -28,7 +28,6 @@ const seekKey = (salt, stretch) => {
 
   for (let i = 0; i < KEY_TARGET; i++) {
     lastKeyIndex = keyFinder();
-    console.log(`Found key at index ${lastKeyIndex}`);
   }
 
   return lastKeyIndex;

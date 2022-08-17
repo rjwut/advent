@@ -22,9 +22,11 @@ npm run session {session-cookie}
 
 ...where `session-cookie` is the value of your `session` cookie from the Advent of Code web site. If your session cookie changes, you will need to run the command again.
 
-If you'd rather provide your input manually, you must sotre it as `input/{year}/{day}.txt`.
+Your session cookie is never transmitted to any location except the Advent of Code web site in order to download your puzzle input. You can confirm this with an inspection of the code. If you're still uncomfortable with providing your session cookie, you can instead provide puzzle input manually. Simply create a file named `input/{year}/{day}.txt` (padding the day with a leading `0` if it's only one digit), and paste your puzzle input into the file.
 
 ## Usage
+
+The `npm start` scripts runs solutions. You can specify the year and day of the solution to run. If the year is omitted, the most recent year that has a directory under `src/solutions` is assumed. If the day is omitted, the most recent day for which a solution module exists in that year folder is assumed. An asterisk (`*`) in place of a year or day means "all".
 
 Run the most recent solution:
 
@@ -38,7 +40,7 @@ Run the solution for a specific day in the most recent year:
 npm start {day}
 ```
 
-Run the latest solution for a specific year:
+Run the most recent solution for a specific year:
 
 ```bash
 npm start {year}
@@ -124,7 +126,7 @@ After I have solved each day's puzzle, I will go back and make improvements:
   - My general rule of thumb is that any solution that runs in less than a second on my machine probably doesn't need to be sped up, unless it's a really low-hanging fruit.
   - If a solution runs in less than five seconds, I'm usually happy with that, but if I see a way to speed it up that doesn't add much in the way of complexity, I'll probably do it.
   - If a solution takes at least five seconds to run, I will definitely spend some time considering how to speed it up, and will be more willing to accept increased complexity as a tradeoff. However, I will still consider it acceptable if I don't think of a good way to improve it.
-  - If a solution takes at least 15 seconds to run, I consider that to mean that my solution is unacceptably "brute force" and that I may need to completely reconsider my approach. However, some of them are really hard and in some cases I've relucatantly left them alone as long as they produce the correct answer.
+  - If a solution takes at least 15 seconds to run, I consider that to mean that my solution is unacceptably "brute force" and that I may need to completely reconsider my approach. However, some of them are really hard and in some cases I've reluctantly left them alone as long as they produce the correct answer.
   - All solutions that take at least five seconds to run on my machine are listed in the **TODO** section below.
 - I refactor code as needed to improve readability and testability.
 - I add documentation. The comments for each day's module will describe the solution algorithm. In more complicated cases, I may divide that description up across the documentation for the various functions in the solution, but in that case the main documentation for the module will always describe where to look for the details.

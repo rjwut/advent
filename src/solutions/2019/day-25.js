@@ -75,14 +75,17 @@ const makeDroid = require('./day-25.droid');
  * - `photons`: The lights go out and you're eaten by a grue.
  *
  * To pass security, you must adjust the droid's weight by holding a specific
- * combination of items (out of a possible 256). You can attempt to deduce how
- * much the items weigh, but it's easy enough to just iterate through all the
- * possible combinations. This can be done by simply assigning each item a bit
- * in an 8-bit value, and iterating through all values from `0` to `255`. If a
- * bit is `1`, then the item is held; otherwise, it's left in the "Security
- * Checkpoint" room. I then compare the desired combination against my current
- * inventory, and take and drop items as necessary. I continue trying to enter
- * with different combinations of items until I get in.
+ * combination of items (out of a possible 256). However, you aren't told what
+ * the target weight is, nor the weights of the individual items. You are only
+ * told whether the droid is too light or too heavy. You can attempt to deduce
+ * which items are lighter or heavier than others, but it's easy enough to just
+ * iterate through all the possible combinations. This can be done by simply
+ * assigning each item a bit in an 8-bit value, and iterating through all
+ * values from `0` to `255`. If a bit is `1`, then the item is held; otherwise,
+ * it's left in the "Security Checkpoint" room. I then compare the desired
+ * combination against my current inventory, and take and drop items as
+ * necessary. I continue trying to enter with different combinations of items
+ * until I get in.
  *
  * TODO Consider changing this to use
  * [Gray code](https://en.wikipedia.org/wiki/Gray_code).

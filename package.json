@@ -17,8 +17,8 @@
     "2019-25": "node ./src/solutions/2019/day-25.interactive"
   },
   "devDependencies": {
-    "eslint": "^8.7.0",
-    "eslint-plugin-jest": "^25.7.0",
-    "jest": "^27.4.3"
+    "eslint": "^8.22.0",
+    "eslint-plugin-jest": "^26.8.3",
+    "jest": "^28.1.3"
   }
 }

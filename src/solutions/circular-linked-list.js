@@ -178,7 +178,7 @@ class CircularLinkedList {
    *
    * @param {number} count - the number of elements to collect
    * @param {number} [pointerId=0] - the ID of the pointer to use
-   * @param {boolean} reverse - whether to navigate the list backwards
+   * @param {boolean} [reverse=false] - whether to navigate the list backwards
    * @throws {Error} - if the list is empty
    * @throws {Error} - if `pointerId` is not a valid pointer ID
    */
@@ -305,7 +305,7 @@ class CircularLinkedList {
    * Creates a new pointer at the same position as the pointer with the given
    * ID.
    *
-   * @param {number} fromId - the ID of an existing pointer to copy
+   * @param {number} [fromId=0] - the ID of an existing pointer to copy
    * @returns {number} - the ID of the new pointer
    * @throws {Error} - if `fromId` is not a valid pointer ID
    */

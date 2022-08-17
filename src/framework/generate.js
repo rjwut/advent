@@ -54,10 +54,14 @@ module.exports = input => {
   const testPath = path.join(dir, `day-${paddedDay}.test.js`);
   const testSrc = `const solver = require('./day-${paddedDay}');
 
-const EXAMPLE = \`\`;
+const EXAMPLES = [
+  { input: '', output: [ undefined, undefined ] },
+];
 
-test('Day ${day}', () => {
-  expect(solver(EXAMPLE)).toEqual([ undefined, undefined ]);
+EXAMPLES.forEach(({ input, output }, i) => {
+  test(\`Day ${day}, example \${i}\`, () => {
+    expect(solver(input)).toEqual(output);
+  });
 });
 `;
   writeIfDoesNotExist(testPath, testSrc);

@@ -8,5 +8,5 @@ bot 0 gives low to output 2 and high to output 0
 value 2 goes to bot 2`;
 
 test('Day 10', () => {
-  expect(solver(EXAMPLE, [ 2, 5 ])).toEqual([ 2, undefined ]);
+  expect(solver(EXAMPLE, [ 2, 5 ])).toEqual([ 2, 30 ]);
 });

@@ -5,5 +5,5 @@ const EXAMPLE = `5-8
 4-7`;
 
 test('Day 20', () => {
-  expect(solver(EXAMPLE)).toEqual([ 3, undefined ]);
+  expect(solver(EXAMPLE)).toEqual([ 3, 4294967288 ]);
 });

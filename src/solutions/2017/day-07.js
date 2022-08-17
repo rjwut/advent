@@ -81,7 +81,7 @@ const parse = input => {
 
   // Create bidirectional links between programs
   for (const program of programs) {
-    program.above = program.above.map(name => {
+    program.above = program.above?.map(name => {
       const aboveProgram = map.get(name);
       aboveProgram.below = program;
       return aboveProgram;
@@ -109,8 +109,10 @@ const parse = input => {
 const computeTotalWeight = program => {
   let total = program.weight;
 
-  for (const subProgram of program.above) {
-    total += computeTotalWeight(subProgram);
+  if (program.above) {
+    for (const subProgram of program.above) {
+      total += computeTotalWeight(subProgram);
+    }
   }
 
   program.total = total;

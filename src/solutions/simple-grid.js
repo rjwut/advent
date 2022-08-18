@@ -268,11 +268,18 @@ class SimpleGrid {
   /**
    * Computes a single value from the values in this `SimpleGrid`. The cells
    * are iterated in row-major order, invoking `callback` for each, passing in
-   * the current accumulator value, along with the row, column, and index for
-   * the cell. The return value of `callback` is the accumulator value which is
-   * passed into the next invocation. The `initialValue` argument is the
-   * accumulator value for the first invocation of `callback`. When all cells
-   * are iterated, the accumulator value is returned.
+   * the following arguments:
+   *
+   * 1. The current accumulator value
+   * 2. The value of the current element
+   * 3. The current row index
+   * 4. The current column index
+   * 5. The current element index
+   *
+   * The return value of `callback` is the accumulator value which is passed
+   * into the next invocation. The `initialValue` argument is the accumulator
+   * value for the first invocation of `callback`. When all cells are iterated,
+   * the accumulator value is returned.
    *
    * @param {Function} callback - the callback function
    * @param {*} initialValue - the first accumulator value

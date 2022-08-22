@@ -89,8 +89,8 @@ class Bounds {
   }
 
   /**
-   * Iterates coordinates in the grid, passing each one to `callback()`. By
-   * default, each coordinate within the bounds is iterated; the `options`
+   * Iterates coordinates within the bounds, passing each one to `callback()`.
+   * By default, each coordinate within the bounds is iterated; the `options`
    * object can change this behavior. If no coordinates have been `put()` into
    * the bounds, no error will be thrown, but `callback()` will not get
    * invoked.

@@ -6,7 +6,9 @@
  * should have priority over the first one, or zero if the two arguments have
  * equal priority. Elements with higher priority are dequeued before items with
  * lower priority; elements with equal priority are dequeued in the order in
- * which they were enqueued.
+ * which they were enqueued. Note that the comparator is executed on insertion;
+ * no attempt is made to keep items in order which may have changed after
+ * insertion.
  */
 class PriorityQueue {
   #items = [];

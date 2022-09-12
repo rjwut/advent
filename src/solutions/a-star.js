@@ -14,9 +14,10 @@ const PriorityQueue = require('./priority-queue');
  *   closer to the goal or further away?
  *
  * @param {*} startNode - The starting node from which to perform the search.
- * @param {*} goal - If `goal` is a `Function`, it is used as a predicate to
- * determine whether the node passed into it is a goal node. Otherwise, `goal`
- * is considered to be a reference to the goal node itself.
+ * @param {*} goal - A reference to the goal node, or a `Function` to be used
+ * as a predicate to test whether the node passed into it is a goal node. The
+ * latter can enable more complex functionality such as real-time goal testing
+ * or allowing multiple possible goals.
  * @param {Function} getEdges - A function which returns an array of edge
  * objects leading to the neighbors of a given node. Each edge object must have
  * a `node` property which is a reference to the neighboring node. It may also

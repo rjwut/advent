@@ -11,7 +11,29 @@ const DIRECTIONS = [
  * and converting it to a graph. You may pass it a two-dimensional array of
  * characters, or a multi-line string which will be split on newlines and
  * converted to a two-dimensional array.
- * 
+ *
+ * As an example, here is a simple input this function can accept:
+ *
+ * ```
+ * #########
+ * #A..B..C#
+ * #.##.##.#
+ * #.##D##.#
+ * #.##.##E#
+ * #F...####
+ * #########
+ * ```
+ *
+ * ...and the corresponding graph:
+ *
+ * ```
+ * [A]----3----[B]----3----[C]
+ *  |           |           |
+ *  4           2           3
+ *  |           |           |
+ * [F]----5----[D]         [E]
+ * ```
+ *
  * Any character that is not a wall (`#` by default) or open space (`.` by
  * default) is considered a node. Nodes are represented by objects with the
  * following properties:

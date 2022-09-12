@@ -41,16 +41,24 @@ const Util = {
    * for each unique key received from `keyFn`. The value under each key is an
    * array of elements that were grouped under that key.
    *
-   * @param {Object} iterable - the elements to group
+   * The callback specified in `keyFn` receives the following arguments for
+   * each element:
+   *
+   * 1. The element itself
+   * 2. The index of the element
+   * 3. The `Iterable` from which the element came
+   *
+   * @param {Iterable} iterable - the elements to group
    * @param {Function} keyFn - a function that returns the group key for the
    * element passed into it
-   * @returns {Map} - the groups
+   * @returns {Map<*, Array>} - the groups
    */
   group: (iterable, keyFn) => {
     const groups = new Map();
+    let i = 0;
 
     for (let element of iterable) {
-      const key = keyFn(element);
+      const key = keyFn(element, i, iterable);
       const group = groups.get(key);
 
       if (!group) {
@@ -58,6 +66,8 @@ const Util = {
       } else {
         group.push(element);
       }
+
+      i++;
     }
 
     return groups;
@@ -86,7 +96,7 @@ const Util = {
    * @param {string} string - the string to parse
    * @param {RegExp} regexp - the regular expression to use to extract records
    * @param {Function|Object} [coerce] - the coercion functions to use, if any
-   * @returns {Array} - the extracted records
+   * @returns {Array<Object>} - the extracted records
    */
   match: (string, regexp, coerce = {}) => {
     let coercions;
@@ -130,7 +140,7 @@ const Util = {
    *
    * @param {string} input - the input string
    * @param {Object} options - the options object
-   * @returns {Array} - the two-dimensional array
+   * @returns {Array<Array<string|number>>} - the two-dimensional array
    */
   parseGrid: (input, options = {}) => {
     input = input.replaceAll('\r', '');
@@ -164,8 +174,8 @@ const Util = {
    * ]
    * ```
    *
-   * @param {*} elements 
-   * @returns 
+   * @param {Array} elements - the elements to permute
+   * @returns {Array<Array>} - the permutations
    */
   permute: elements => {
     const permutations = [];
@@ -182,6 +192,10 @@ const Util = {
    *   grouped, assuming that groups are separated by a blank token
    * - `parseInt` (boolean, default = `false`): Whether non-blank tokens
    *   should be parsed as integers.
+   *
+   * If `group` is `true`, the return value will be an array of arrays, where
+   * each inner array is a group of tokens. Otherwise, it will just be a single
+   * array containing the tokens (optionally parsed as numbers).
    *
    * @param {string} input - the input string to be split
    * @param {Object} options
@@ -236,7 +250,7 @@ const Util = {
  * permutation branch
  * @param {Array} remaining - the elements not yet selected for the current
  * permutation branch
- * @param {Array} permutations - the permutations found so far
+ * @param {Array<Array>} permutations - the permutations found so far
  */
 const permuteInternal = (selected, remaining, permutations) => {
   remaining.forEach((element, i) => {

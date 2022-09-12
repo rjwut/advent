@@ -13,6 +13,75 @@ const LINE_REGEXP = /^(?<state>on|off) x=(?<x0>-?\d+)\.\.(?<x1>-?\d+),y=(?<y0>-?
  * overlapping cuboids are cancelled, you add the new cuboid if it's on, or
  * just leave it out if it's off.
  *
+ * Here's a one-dimensional illustration of the concept. Let's start with just
+ * a single line segment, `A`:
+ *
+ * ```txt
+ *         |---------A---------|            length = 4
+ * <--+----+----+----+----+----+----+----+-->
+ *    2    3    4    5    6    7    8    9
+ *
+ * Now we add another line segment `B`, and want to compute the total length of
+ * the union of those segments:
+ *
+ * ```txt
+ *         |---------A---------|            length = 4
+ *                   |---------B---------|  length = 4
+ *         |----------------------------|  <-- solve for A ∪ B
+ * <--+----+----+----+----+----+----+----+-->
+ *    2    3    4    5    6    7    8    9
+ * ```
+ *
+ * To do this, we create another segment `D` representing `A ∩ B`, but consider its
+ * length negative, rather than positive. This cancels out the doubling of the
+ * intersection between `A` and `B` when we add them up.
+ *
+ * ```txt
+ *         |---------A---------|            length =  4
+ *                   |---------B---------|  length =  4
+ *                   |----D----|            length = -2 (A ∩ B)
+ *         |-----------------------------|  <-- solve for A ∪ B
+ * <--+----+----+----+----+----+----+----+-->
+ *    2    3    4    5    6    7    8    9
+ * ```
+ *
+ * Now we just add all their lengths: `4 + 4 - 2 = 6`.
+ *
+ * Now suppose we add a third line segment, `C`, and we want to compute
+ * `A ∪ B ∪ C`?
+ *
+ * ```txt
+ *         |---------A---------|            length =  4
+ *                   |---------B---------|  length =  4
+ *    |---------C---------|                 length =  4
+ *                   |----D----|            length = -2 (A ∩ B)
+ *    |----------------------------------|  <-- solve for A ∪ B ∪ C
+ * <--+----+----+----+----+----+----+----+-->
+ *    2    3    4    5    6    7    8    9
+ * ```
+ *
+ * We do the same as before, except against `A`, `B`, and `D`:
+ *
+ * ```txt
+ *         |---------A---------|            length =  4
+ *                   |---------B---------|  length =  4
+ *    |---------C---------|                 length =  4
+ *                   |----D----|            length = -2 (A ∩ B)
+ *         |------E-------|                 length = -3 (A ∩ C)
+ *                   |-F--|                 length = -1 (B ∩ C)
+ *                   |-G--|                 length =  1 (D ∩ C)
+ *    |----------------------------------|  <-- solve for A ∪ B ∪ C
+ * <--+----+----+----+----+----+----+----+-->
+ *    2    3    4    5    6    7    8    9
+ * ```
+ *
+ * Note that `G` represents the intersection between `C` and `D`, but since `D`
+ * is already negative, `G` will be positive. Now we add up the lengths:
+ *
+ * `4 + 4 + 4 - 2 - 3 - 1 + 1 = 7`
+ *
+ * ---
+ *
  * Procedure for adding a cuboid:
  *
  * 1. If we're in part one, reduce the cuboid to its intersection with the

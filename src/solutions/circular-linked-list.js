@@ -174,22 +174,21 @@ class CircularLinkedList {
    * until `count` elements have been collected. The same element will appear
    * multiple times if `count` is larger than the list's `size`. The returned
    * elements are not removed from the list, and no pointers are moved. If the
-   * list is empty, `sequence()` will throw an `Error`.
+   * list is empty, `sequence()` will return an empty array.
    *
    * @param {number} count - the number of elements to collect
    * @param {number} [pointerId=0] - the ID of the pointer to use
    * @param {boolean} [reverse=false] - whether to navigate the list backwards
-   * @throws {Error} - if the list is empty
    * @throws {Error} - if `pointerId` is not a valid pointer ID
    */
   sequence(count, pointerId = 0, reverse = false) {
-    if (this.#size === 0) {
-      throw new Error('Cannot get sequence of empty list');
-    }
-
     const dir = reverse ? 'prev' : 'next';
     let node = this.#get(pointerId);
     const sequence = [];
+
+    if (this.#size === 0) {
+      return sequence;
+    }
 
     for (let i = 0; i < count; i++) {
       sequence.push(node.value);

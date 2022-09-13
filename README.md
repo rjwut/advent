@@ -108,9 +108,7 @@ When I begin a puzzle day, I execute `npm run generate {year} {day}` to build th
 
 ## Workflow for Developing a Puzzle Solution
 
-I follow test-driven development when tackling each day's puzzle. The first thing I do after reading the puzzle description is to take any example data given in the puzzle and put it into the test module. Then I write in the expected answer(s) for the example data for part one, leaving part two as `undefined`.
-
-Sometimes a puzzle will give more than one example; in that case, I will usually adapt the test module to run through all of them. Also, there will sometimes be examples that only work for one part or the other; in this case, I will often make it so that you can pass the part you want solved into the solution module, and it will return just that part instead of both.
+I follow test-driven development when tackling each day's puzzle. The first thing I do after reading the puzzle description is to take any example data given in the puzzle and put it into the test module. Then I write in the expected answer(s) for the example data for part one, leaving part two as `undefined`. There will sometimes be examples that only work for one part or the other; in this case, I will often make it so that you can pass the part you want solved into the solution module, and it will return just that part instead of both.
 
 From there I start work on the actual solution. Once I think I have it, I run the test and check to see if it passes. If it fails, the failure output usually gives me a reasonable idea of where to look for the problem. I continue the fix-test cycle until the test passes. I will occasionally add more test cases to help me troubleshoot bugs in my solution.
 
@@ -142,16 +140,22 @@ A bunch of modules that help with recurring tasks in Advent of Code are included
 
 A generic implementation of the [A* algorithm](https://en.wikipedia.org/wiki/A*_search_algorithm).
 
-### `infinite-grid` and `boolean-infinite-grid`
+These classes use arrays to represent coordinates, which get converted to strings to use as keys. In `BooleanInfiniteGrid`, these keys are stored in a `Set`; a key's presence in the `Set` indicates that the value at those coordinates is `true`; otherwise, the value is `false`. For `InfiniteGrid`, the elements are stored in a `Map` under those keys. You can create your own infinite grid implementation by extending `AbstractInfiniteGrid`.
 
-These modules contain classes are useful for scenarios where you need to work with a grid, but using arrays is less convenient because of any of the following reasons:
+### `abstract-infinite-grid`
+
+This module exports the `AbstractInfiniteGrid` class, which is extended by `BooleanInfiniteGrid` and `InfiniteGrid`. These classes are useful where arrays are less desireable for working with a grid because of any of the following reasons:
 
 - The coordinate space doesn't begin with zero (and may be negative).
 - You don't know the size of the grid before you create it.
 - The grid is large but sparsely populated.
 - You're dealing with more than two dimensions.
 
-These classes use arrays to represent coordinates, which get converted to strings to use as keys. In `BooleanInfiniteGrid`, these keys are stored in a `Set`; a key's presence in the `Set` indicates that the value at those coordinates is `true`; otherwise, the value is `false`. For `InfiniteGrid`, the elements are stored in a `Map` under those keys. You can create your own infinite grid implementation by extending `AbstractInfiniteGrid`.
+These classes solve the problem by concatenating the coordinate values for an element into a string, which is then used as a key under which the data for that element is stored. A class which extends `AbstractInfiniteGrid` must provide a storage object which implements a specific interface to store the data.
+
+### `boolean-infinite-grid`
+
+An `AbstractInfiniteGrid` implementation where the elements are boolean values which default to `false`. It is implemented with a `Set` containing the keys for the elements which are `true`.
 
 ### `bounds`
 
@@ -159,11 +163,15 @@ This module contains the `Bounds` class, which is used to represent the bounds o
 
 ### `circular-linked-list`
 
-This class is a data structure that keeps elements in a circular list. You can rotate the pointer around the list, inspect the element at the pointer, remove that element, or insert elements before or after that element. The advantage this class has over arrays is that insertions and removals are much less expensive, because there is no need to shift elements, and you don't need to write special code to deal with the fact that the list wraps around.
+The `CircularLinkedList` class is a doubly-linked list where the first and last elements are linked together to form a ring. You can rotate the pointer around the list, inspect the element at the pointer, remove that element, or insert elements before or after that element. The advantage this class has over arrays is that insertions and removals are much less expensive because there is no need to shift elements, and you don't need to write any code to deal with the fact that the list wraps around.
 
 ### `grid-to-graph`
 
-This takes a two-dimensional array representing a maze and converts it to a graph. You specify the characters that represent walls and empty space, and any other character is converted to a graph node, and distances are computed for the edges.
+This takes a two-dimensional array of characters representing a maze and converts it to a graph. You specify the characters that represent walls and empty space, and any other character is converted to a graph node, and distances are computed for the edges.
+
+### `infinite-grid`
+
+An `AbstractInfiniteGrid` implemenation where the elements can be any value and which default to `undefined`. It is implemented with a `Map` where each element value is stored under its coordinate key.
 
 ### `math2`
 
@@ -171,7 +179,7 @@ Additional math functions on top of those present in the built-in `Math` object.
 
 ### `priority-queue`
 
-A class which implements a queue where elements are dequeued in order of priority. Priority is determined by a comparator function provided when the queue is created.
+A `PriorityQueue` class implements a queue where elements are dequeued in order of priority rather than insertion. Priority is determined on insertion and is computed by a comparator function provided when the queue is created.
 
 ### `summed-area-table`
 

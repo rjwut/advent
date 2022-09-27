@@ -23,15 +23,16 @@ const PriorityQueue = require('./priority-queue');
  * a `node` property which is a reference to the neighboring node. It may also
  * have a `cost` property, which is a numeric value representing the cost of
  * moving to this node. If `cost` is omitted, `1` is assumed.
- * @param {Function} heuristic - A function which returns the heuristic cost of
- * moving to a given node. Nodes which appear closer to the goal should have
- * lower heuristic costs than nodes which appear further away.
+ * @param {Function} [heuristic] - A function which returns the heuristic cost
+ * of moving to a given node. Nodes which appear closer to the goal should have
+ * lower heuristic costs than nodes which appear further away. If omitted, no
+ * heuristic will be used in attempting to find the optimal path.
  * @returns {Object|null} An object describing the path to the goal node, or
  * `null` if no path was found. The object will have a `path` property, which
  * is an array of nodes starting at `startNode` and ending at the goal node,
  * and a `cost` property, which is the total cost of the path.
  */
-module.exports = (startNode, goal, getEdges, heuristic) => {
+module.exports = (startNode, goal, getEdges, heuristic = () => 0) => {
   const goalPredicate = typeof goal === 'function' ? goal : node => node === goal;
   const frontier = new PriorityQueue((a, b) => a.f - b.f);
   const nodeData = new Map();

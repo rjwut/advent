@@ -148,11 +148,11 @@ class SimpleGrid {
   forEachInRegion(r0, c0, rows, cols, callback) {
     const r1 = r0 + rows;
     const c1 = c0 + cols;
-    let i = 0;
 
     for (let r = r0; r < r1; r++) {
       for (let c = c0; c < c1; c++) {
-        callback(this.#grid[this.#getIndex(r, c)], r, c, i++);
+        const index = this.#getIndex(r, c);
+        callback(this.#grid[index], r, c, index);
       }
     }
   }
@@ -177,15 +177,15 @@ class SimpleGrid {
     const r1 = Math.min(r + size, this.#rows - 1);
     const c0 = Math.max(c - size, 0);
     const c1 = Math.min(c + size, this.#cols - 1);
-    let i = 0;
 
-    for (let r = r0; r <= r1; r++) {
-      for (let c = c0; c <= c1; c++) {
-        if (r === r0 && c === c0 && !includeSelf) {
+    for (let nr = r0; nr <= r1; nr++) {
+      for (let nc = c0; nc <= c1; nc++) {
+        if (r === nr && c === nc && !includeSelf) {
           continue;
         }
 
-        callback(this.#grid[this.#getIndex(r, c)], r, c, i++);
+        const index = this.#getIndex(nr, nc);
+        callback(this.#grid[index], nr, nc, index);
       }
     }
   }
@@ -206,7 +206,12 @@ class SimpleGrid {
    * @returns {SimpleGrid} - the clone
    */
   clone() {
-    return new SimpleGrid({ [INTERNAL]: true, grid: this.#grid, rows: this.#rows, cols: this.#cols });
+    return new SimpleGrid({
+      [INTERNAL]: true,
+      grid: [ ...this.#grid ],
+      rows: this.#rows,
+      cols: this.#cols,
+    });
   }
 
   /**

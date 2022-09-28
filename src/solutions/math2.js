@@ -15,6 +15,36 @@ const Math2 = {
   ),
 
   /**
+   * Returns all factors of `n`.
+   *
+   * @param {number} n - the number to factor
+   * @returns {Array<number>} - the factors of `n`
+   */
+  factor: n => {
+    const limit = Math.floor(Math.sqrt(n));
+    const factors = [];
+
+    for (let i = limit; i > 1; i--) {
+      if (n % i === 0) {
+        factors.unshift(i);
+        const other = n / i;
+
+        if (i !== other) {
+          factors.push(other);
+        }
+      }
+    }
+
+    factors.unshift(1);
+
+    if (n > 1) {
+      factors.push(n);
+    }
+
+    return factors;
+  },
+
+  /**
    * Returns the greatest common divisor of the two arguments.
    *
    * @param {number} a - an integer
@@ -30,6 +60,10 @@ const Math2 = {
    * @returns {boolean} - whether `n` is prime
    */
   isPrime: n => {
+    if (n < 2) {
+      return false;
+    }
+
     const limit = Math.sqrt(n);
 
     for (let i = 2; i <= limit; i++) {

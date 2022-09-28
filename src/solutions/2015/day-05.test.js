@@ -15,7 +15,6 @@ EXAMPLES.push({
   input: EXAMPLES.map(({ input }) => input).join('\n'),
   output: EXAMPLES.reduce((sums, { output }) => [ sums[0] + output[0], sums[1] + output[1] ], [ 0, 0 ]),
 });
-console.log(EXAMPLES);
 
 EXAMPLES.forEach(({ input, output }, i) => {
   test(`Day 5, example ${i}`, () => {

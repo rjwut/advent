@@ -14,7 +14,7 @@ const { isPrime } = require('../math2');
  * have to read the machine code and figure out what the program does. It turns
  * out that it is iterating over every 17th value in a range of numbers, and
  * counting the number of composite (non-prime) numbers it encounters. I can
- * easily write something in JavaScript that will be must more efficient than
+ * easily write something in JavaScript that will be much more efficient than
  * the Duet VM. However, I want my solution to work for everyone's inputs, not
  * just mine. Otherwise, I might as well write part two to just return the
  * answer!

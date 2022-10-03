@@ -41,7 +41,7 @@ module.exports = input => {
 
 /**
  * Parses the puzzle input, produces the graph that it represents, and then
- * finds all connected subtgraphs. Each subgraph is a `Set` containing the IDs
+ * finds all connected subgraphs. Each subgraph is a `Set` containing the IDs
  * of all nodes in the subgraph.
  *
  * @param {string} input - the puzzle input

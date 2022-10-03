@@ -159,7 +159,7 @@ const part1 = tree => {
  * K -> J -> E -> D -> I
  * ```
  *
- * ...which is four orbital transfers. To determine this trasnfer count, we
+ * ...which is four orbital transfers. To determine this transfer count, we
  * first perform breadth-first searches from `COM` to `YOU` and `SAN`, saving
  * the paths for each:
  *

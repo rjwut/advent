@@ -194,9 +194,12 @@ Miscellaneous utility functions.
 Things I'd like to improve:
 
 - Make code generator script intelligently select the year and day when omitted
+- Refactor solutions that I wrote before the `InfiniteGrid` class to use it
+  - 2020-20
+  - 2021-05
 - 2019-25: Try combinations of inventory items using [Gray code](https://en.wikipedia.org/wiki/Gray_code)
-- 2021-05: Re-use the `InfiniteGrid` class
 - Long runtimes:
+  - 2016-11: 64.936 s
   - 2018-21: 57.588 s
   - 2018-22: 22.599 s
   - 2018-14: 15.992 s

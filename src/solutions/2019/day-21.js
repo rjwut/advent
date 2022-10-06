@@ -12,7 +12,7 @@ const intcode = require('./intcode-ascii');
  * @param {string} input - the puzzle input
  * @returns {Array} - the puzzle answers
  */
- module.exports = input => [ part1, part2 ].map(fn => fn(input));
+module.exports = input => [ part1, part2 ].map(fn => fn(input));
 
 /**
  * Solves the first part of the puzzle.

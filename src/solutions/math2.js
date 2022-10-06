@@ -47,9 +47,9 @@ const Math2 = {
   /**
    * Returns the greatest common divisor of the two arguments.
    *
-   * @param {number} a - an integer
-   * @param {number} b - another integer
-   * @returns {number} - the greatest common divisor
+   * @param {number|bigint} a - an integer
+   * @param {number|bigint} b - another integer
+   * @returns {number|bigint} - the greatest common divisor
    */
   gcd: (a, b) => b ? Math2.gcd(b, a % b) : Math.abs(a),
 
@@ -109,6 +109,7 @@ const Math2 = {
 
     return distance;
   },
+
   /**
    * Returns the maximum value in the given array, which must contain at least
    * one value. This function will work even on large arrays where `Math.max()`
@@ -128,6 +129,20 @@ const Math2 = {
     * @returns {number} - the minimum
     */
   min: terms => terms.reduce((min, value) => min < value ? min : value),
+
+  /**
+   * Computes `n mod m`. This is different than the `%` operator in the case of
+   * negative numbers, e.g. `-8 % 7 = -1`, but `mod(-8, 7) = 6`.
+   *
+   * @param {number} n - the divisor
+   * @param {number} m - the modulus
+   * @returns {number} - the residue
+   */
+  mod: (n, m) => {
+    const zero = typeof n === 'bigint' ? 0n : 0;
+    const remainder = n % m;
+    return remainder + (remainder < zero ? m : zero);
+  },
 
   /**
    * Returns the product of the numbers in the given array, or `1` if the array

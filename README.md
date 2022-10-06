@@ -26,7 +26,7 @@ Your session cookie is never transmitted to any location except the Advent of Co
 
 ## Usage
 
-The `npm start` scripts runs solutions. You can specify the year and day of the solution to run. If the year is omitted, the most recent year that has a directory under `src/solutions` is assumed. If the day is omitted, the most recent day for which a solution module exists in that year folder is assumed. An asterisk (`*`) in place of a year or day means "all".
+The `npm start` script runs solutions. You can specify the year and day of the solution to run. If the year is omitted, the most recent year that has a directory under `src/solutions` is assumed. If the day is omitted, the most recent day for which a solution module exists in that year folder is assumed. An asterisk (`*`) in place of a year or day means "all".
 
 Run the most recent solution:
 
@@ -76,10 +76,22 @@ Lint the code:
 npm run lint
 ```
 
-Run unit tests:
+Run tests:
 
 ```bash
 npm test
+```
+
+Run all tests for a particular year's solutions:
+
+```bash
+npm test {year}
+```
+
+Run tests for a specific day:
+
+```bash
+npm test {year}/day-{day}
 ```
 
 Run the interactive program from 2019 day 25:
@@ -91,13 +103,13 @@ npm run 2019-25
 ## Project Structure
 
 - **Solution code**: These files are code that actually solves the puzzles. They are found under `src/solutions`:
-  - Most puzzle solutions are implemented in a single module at `src/solutions/{year}/day-{day}.js`.
+  - Most puzzle solutions are implemented in a single module at `src/solutions/{year}/day-{day}.js`. (The `day` parameter is zero-padded, if needed.)
   - Some solutions are complex enough that I've broken them apart into multiple modules. The support modules for a single day's puzzle will have names like `src/solutions/{year}/day-{day}.{submodule}.js`.
   - Sometimes code gets reused across multiple days in the same year, like the Intcode interpreter in 2019. In that case, the module will be found at `src/solutions/{year}/{name}.js` (no `day-` prefix).
-- **Utility code**: Some code is techically part of the solution code, but it is generally useful for Advent of Code regardless of the year. These are found under `src/solutions` rather than under the directory for a specific year.
+- **Utility code**: Some code is techically part of the solution code, but it is generally useful for Advent of Code regardless of the year. These modules are found under `src/solutions` rather than under the directory for a specific year.
 - **Framework code**: This is code that isn't actually part of the solutions themselves, but is support code to generate or run the solutions. These are found under `src/framework`.
 - **Test code**: These are unit tests, found adjacent to the code they test. They end with `.test.js` instead of just `.js`.
-- **Input files**: These are files that the framework code reads to execute the solutions. They are found under the `input` directory. This directory is empty (apart from a small `README.md` file) in the repository because they are unique per user. When the framework fetches your input for a puzzle from the Advent of Code site, it will automatically create a cache file containing the input at `input/{year}/{day}.txt`. This way, it never has to retrieve it from the site again. To enable this, you must provide your Advent of Code session cookie to the framework by running `npm run session {cookie-value}`. (The cookie value is stored in `input/.session`.) As long as your session remains valid, you only have to this once. If you'd prefer, you can retrieve your input yourself and store it as described rather than let the framework fetch it for you.
+- **Input files**: These are files that the framework code reads to execute the solutions. They are found under the `input` directory. This directory is empty (apart from a small `README.md` file) in the repository because they are unique per user. When the framework fetches your input for a puzzle from the Advent of Code site, it will automatically create a cache file containing the input at `input/{year}/{day}.txt`. This way, it never has to retrieve it from the site again. To enable this, you must provide your Advent of Code session cookie to the framework by running `npm run session {cookie-value}`. (The cookie value is stored in `input/.session`.) As long as your session remains valid, you only have to this once. If you'd prefer, you can retrieve your input yourself and store it as described earlier rather than let the framework fetch it for you.
 
 ## Bootstrapping a Puzzle Solution
 
@@ -112,19 +124,21 @@ I follow test-driven development when tackling each day's puzzle. The first thin
 
 From there I start work on the actual solution. Once I think I have it, I run the test and check to see if it passes. If it fails, the failure output usually gives me a reasonable idea of where to look for the problem. I continue the fix-test cycle until the test passes. I will occasionally add more test cases to help me troubleshoot bugs in my solution.
 
-Once my solution for part one is working against the test data, I'll run `npm start`, which will download my puzzle input for that day (if it hasn't already), run it through the solution, and print the result to the console. I can then enter the answer for part one into the Advent of Code web site to see if it's correct. (Usually, if my tests pass, it's right.)
+Once my solution for part one is working against the test data, I'll run `npm start`, which will download my puzzle input for that day (if it hasn't already), run it through the solution, and print the result to the console. I can then enter the answer for part one into the Advent of Code web site to see if it's correct. Often, it is, but sometimes the actual data has an important difference from the test data that I will find during this step.
 
-I repeat the procedure for part two of the day's puzzle. Often part two will reveal a new wrinkle that will require some refactoring of the code. I generally try to isolate the part that differs between the two parts, then refactor the code to make the rest of it work for both parts.
+When I have the correct answer for part one, I repeat the procedure for part two of the day's puzzle. Often part two will reveal a new wrinkle that will require some refactoring of the code. I generally try to isolate the part that differs between the two parts, then refactor the code to make the rest of it work for both parts.
 
 Sometimes a solution is complex enough that I find it useful to break it apart into more modules, which allows me to develop and test each part independently. These sub-modules will have an additional descriptive suffix added to the filename, like `day-20.grid.js` and `day-20.grid.test.js`. The main solution module can then import the sub-modules and use them to solve the puzzle.
 
+Other times, I might want to be able to test some code independently, but maybe I feel it's too small to peel off into a separate module. In those cases, I might expose that function for testing as a property of the exported function.
+
 After I have solved each day's puzzle, I will go back and make improvements:
 
-- I take a look at performance. The `npm start` script will time each solution run and print the elapsed time for running both parts to the console. It's normally printed in gray, but turns yellow if it takes at least five seconds to run, and red if it takes at least 15 seconds.
-  - My general rule of thumb is that any solution that runs in less than a second on my machine probably doesn't need to be sped up, unless it's a really low-hanging fruit.
-  - If a solution runs in less than five seconds, I'm usually happy with that, but if I see a way to speed it up that doesn't add much in the way of complexity, I'll probably do it.
-  - If a solution takes at least five seconds to run, I will definitely spend some time considering how to speed it up, and will be more willing to accept increased complexity as a tradeoff. However, I will still consider it acceptable if I don't think of a good way to improve it.
-  - If a solution takes at least 15 seconds to run, I consider that to mean that my solution is unacceptably "brute force" and that I may need to completely reconsider my approach. However, some of them are really hard and in some cases I've reluctantly left them alone as long as they produce the correct answer.
+- I take a look at performance. The `npm start` script will time each solution run and print the elapsed time for running both parts to the console. It's normally printed in gray, but turns yellow if it takes at least five seconds to run, and red if it takes at least 15 seconds. Depending on how long it takes the test to run, I may attempt to optimize it:
+  - _Less than a second:_ Acceptable; no further changes.
+  - _Between one and five seconds:_ I'm usually happy with that, but if I see a way to speed it up that doesn't add much in the way of complexity, I'll probably do it.
+  - _Between five and fifteen seconds:_ I will definitely spend some time considering how to speed it up, and will be more willing to accept increased complexity as a tradeoff. However, I will still consider it acceptable if I don't think of a good way to improve it.
+  - _Fifteen seconds or more:_ My solution is unacceptably "brute force" and that I may need to completely reconsider my approach. However, in some cases I have decided that it's too hard to be worth redoing and have just left it as is.
   - All solutions that take at least five seconds to run on my machine are listed in the **TODO** section below.
 - I refactor code as needed to improve readability and testability.
 - I add documentation. The comments for each day's module will describe the solution algorithm. In more complicated cases, I may divide that description up across the documentation for the various functions in the solution, but in that case the main documentation for the module will always describe where to look for the details.
@@ -140,8 +154,6 @@ A bunch of modules that help with recurring tasks in Advent of Code are included
 
 A generic implementation of the [A* algorithm](https://en.wikipedia.org/wiki/A*_search_algorithm).
 
-These classes use arrays to represent coordinates, which get converted to strings to use as keys. In `BooleanInfiniteGrid`, these keys are stored in a `Set`; a key's presence in the `Set` indicates that the value at those coordinates is `true`; otherwise, the value is `false`. For `InfiniteGrid`, the elements are stored in a `Map` under those keys. You can create your own infinite grid implementation by extending `AbstractInfiniteGrid`.
-
 ### `abstract-infinite-grid`
 
 This module exports the `AbstractInfiniteGrid` class, which is extended by `BooleanInfiniteGrid` and `InfiniteGrid`. These classes are useful where arrays are less desireable for working with a grid because of any of the following reasons:
@@ -152,6 +164,8 @@ This module exports the `AbstractInfiniteGrid` class, which is extended by `Bool
 - You're dealing with more than two dimensions.
 
 These classes solve the problem by concatenating the coordinate values for an element into a string, which is then used as a key under which the data for that element is stored. A class which extends `AbstractInfiniteGrid` must provide a storage object which implements a specific interface to store the data.
+
+These classes use arrays to represent coordinates, which get converted to strings to use as keys. (I'll probably change this to use [tuples](https://github.com/tc39/proposal-record-tuple) once that feature is available.) In `BooleanInfiniteGrid`, these keys are stored in a `Set`; a key's presence in the `Set` indicates that the value at those coordinates is `true`; otherwise, the value is `false`. For `InfiniteGrid`, the elements are stored in a `Map` under those keys. You can create your own infinite grid implementation by extending `AbstractInfiniteGrid`.
 
 ### `boolean-infinite-grid`
 
@@ -180,6 +194,10 @@ Additional math functions on top of those present in the built-in `Math` object.
 ### `priority-queue`
 
 A `PriorityQueue` class implements a queue where elements are dequeued in order of priority rather than insertion. Priority is determined on insertion and is computed by a comparator function provided when the queue is created.
+
+### `simple-grid`
+
+In cases where the more powerful `InfiniteGrid` or `BooleanInfiniteGrid` classes are not needed, this `SimpleGrid` class provides a simpler, more performant grid implementation which can automatically parse the usual grid representation found in puzzle inputs.
 
 ### `summed-area-table`
 

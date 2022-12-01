@@ -5,7 +5,7 @@ const https = require('https');
 const INPUT_DIR = path.join(__dirname, '..', '..', 'input');
 const SESSION_ID_FILE = path.join(INPUT_DIR, '.session');
 const RATE_LIMIT_MS = 10_000;
-const USER_AGENT = 'github.com/rjwut/advent by rjw801@gmail.com';
+const USER_AGENT = 'github.com/rjwut/advent; submit issues at https://github.com/rjwut/advent/issues/new';
 
 let sessionId;
 let lastRequestTime;

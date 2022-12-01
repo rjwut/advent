@@ -5,6 +5,7 @@ const https = require('https');
 const INPUT_DIR = path.join(__dirname, '..', '..', 'input');
 const SESSION_ID_FILE = path.join(INPUT_DIR, '.session');
 const RATE_LIMIT_MS = 10_000;
+const USER_AGENT = 'github.com/rjwut/advent by rjw801@gmail.com';
 
 let sessionId;
 let lastRequestTime;
@@ -47,7 +48,7 @@ const readFromCache = async (year, day) => {
     if (err.code === 'ENOENT') {
       return null;
     }
-   
+
     throw err;
   }
 };
@@ -104,6 +105,7 @@ const get = url => new Promise((resolve, reject) => {
   const options = {
     headers: {
       Cookie: `session=${sessionId}`,
+      'User-Agent': USER_AGENT,
     },
   };
   const req = https.get(url, options, res => {

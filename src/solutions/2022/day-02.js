@@ -29,5 +29,11 @@ const THROWS = {
  */
 module.exports = input => {
   const throws = split(input);
-  return [ 0, 1 ].map(i => add(throws.map(throwStr => THROWS[throwStr][i])));
+  return [ 0, 1 ].map(
+    i => add(
+      throws.map(
+        throwStr => THROWS[throwStr][i]
+      )
+    )
+  );
 };

@@ -54,6 +54,15 @@ module.exports = input => {
   const testPath = path.join(dir, `day-${paddedDay}.test.js`);
   const testSrc = `const solver = require('./day-${paddedDay}');
 
+// Code for single example
+const EXAMPLE = \`\`;
+
+test('Day ${day}', () => {
+  expect(solver(EXAMPLE)).toEqual([ undefined, undefined ]);
+});
+
+// Code for multiple examples
+/*
 const EXAMPLES = [
   { input: '', output: [ undefined, undefined ] },
 ];
@@ -63,6 +72,7 @@ EXAMPLES.forEach(({ input, output }, i) => {
     expect(solver(input)).toEqual(output);
   });
 });
+*/
 `;
   writeIfDoesNotExist(testPath, testSrc);
   return 0;

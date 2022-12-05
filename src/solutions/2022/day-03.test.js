@@ -1,6 +1,5 @@
 const solver = require('./day-03');
 
-// Code for single example
 const EXAMPLE = `vJrwpWtwJgWrhcsFMMfFFhFp
 jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
 PmmdzqPrVvPwwTWBwg

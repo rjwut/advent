@@ -11,7 +11,7 @@ const { add } = require('../math2');
  * `Range` has `contains()`, which accepts either the ID of a section or another `Range`, and
  * returns whether that section or `Range` is contained by this `Range`. It also has `overlaps()`,
  * which returns whether this `Range` overlaps the given `Range`. To detect the latter, we check
- * whether `range1` contains either endpoint of `range2`, or if `range2` contains `range1`
+ * whether `range1` contains either endpoint of `range2`, or if `range2` contains `range1`.
  *
  * @param {string} input - the puzzle input
  * @returns {Array} - the puzzle answers

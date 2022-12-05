@@ -1,6 +1,5 @@
 const solver = require('./day-04');
 
-// Code for single example
 const EXAMPLE = `2-4,6-8
 2-3,4-5
 5-7,7-9

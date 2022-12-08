@@ -16,26 +16,25 @@ class SimpleGrid {
    * Options (all are optional individually, either `data` or `rows` and `cols`
    * must be provided):
    *
-   * - `cols` (number): The number of columns in the grid.
-   * - `data` (string): Data with which to populate the grid. Carriage returns
-   *   will be stripped first. If it contains one or more instances of the
-   *   separator character, the data will be split into rows on those
-   *   characters, and the `rows` and `cols` options will be ignored.
-   *   Otherwise, the `rows` or `cols` option (or both) must be specified so
-   *   that the size of the grid can be computed.
-   * - `fill` (any, default = `undefined`): The value to fill the empty grid
-   *   with. Ignored if `data` is specified.
-   * - `separator` (string, default = `'\n`): If this character is found in the
-   *   string, it will be used as the row separator. If the `data` string ends
-   *   with this character, it will be stripped off. Ignored if `data` is not
-   *   specified.
-   * - `rows` (number): The number of rows in the grid.
+   * - `cols` (`number`): The number of columns in the grid.
+   * - `coerce` (`Function`): A function used to convert the value of each cell. Ignored unless
+   *   `data` is specified.
+   * - `data` (`string`): Data with which to populate the grid. Carriage returns will be stripped
+   *   first. If it contains one or more instances of the separator character, the data will be
+   *   split into rows on those characters, and the `rows` and `cols` options will be ignored.
+   *   Otherwise, the `rows` or `cols` option (or both) must be specified so that the size of the
+   *   grid can be computed.
+   * - `fill` (`any`, default = `undefined`): The value to fill the empty grid with. Ignored if
+   *   `data` is specified.
+   * - `separator` (`string`, default = `'\n`): If this character is found in the string, it will
+   *   be used as the row separator. If the `data` string ends with this character, it will be
+   *   stripped off. Ignored if `data` is not specified.
+   * - `rows` (`number`): The number of rows in the grid.
    *
-   * `SimpleGrid` methods that create new `SimpleGrid` instances can use an
-   * alternate form of the constructor options (all required):
+   * `SimpleGrid` methods that create new `SimpleGrid` instances can use an alternate form of the
+   * constructor options (all required):
    *
-   * - `[INTERNAL]` (any value): Flag indicating that this options format
-   *   should be used.
+   * - `[INTERNAL]` (any value): Flag indicating that this options format should be used.
    * - `grid` (`Array`): The grid data, as a one-dimenstional array.
    * - `rows` (number): The number of rows in the grid.
    * - `cols` (number): The number of columns in the grid.
@@ -245,7 +244,7 @@ class SimpleGrid {
    *
    * @param {SimpleGrid} pasted - the grid to copy
    * @param {number} r - the row of the top-left corner of the destination
-   * @param {number} c - the column of the top-left corner of the destination 
+   * @param {number} c - the column of the top-left corner of the destination
    */
   paste(pasted, r, c) {
     pasted.forEach((value, rPaste, cPaste) => {
@@ -503,6 +502,10 @@ class SimpleGrid {
       } else {
         throw new Error('Must specify either rows or cols option');
       }
+    }
+
+    if (options.coerce) {
+      this.#grid = this.#grid.map(options.coerce);
     }
   }
 

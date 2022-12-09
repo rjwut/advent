@@ -1,5 +1,24 @@
 # Advent of Code Solutions
 
+## Note About Automation
+
+**Automation problems? I'll fix it.**
+
+- 👀 [Inspect relevant code](https://github.com/rjwut/advent/blob/main/src/framework/fetch-input.js)
+- 📧 [Contact me](https://github.com/rjwut/advent/issues/new)
+
+`User-Agent` header:
+
+```txt
+github.com/rjwut/advent 2022-12-08; contact @ https://github.com/rjwut/advent/issues/new
+```
+
+The code in this repository follows the [automation guidelines on the /r/adventofcode community wiki](https://www.reddit.com/r/adventofcode/wiki/faqs/automation/).
+
+- **Only inputs requested:** The only requests this code makes against adventofcode.com is to download puzzle input.
+- **Requests are throttled:** Requests are made no more frequently than once per minute.
+- **Inputs are cached:** Inputs are locally cached so that any given input is only requested once. If the user wishes to download an input again, the must delete the relevant cache file.
+
 ## Introduction
 
 This repository contains my solutions for [Advent of Code](https://adventofcode.com). Most solution repositories you'll find on GitHub contain quick-and-dirty code. That's fine for earning stars as fast as possible, but I wanted something that would be more useful for people wanting to learn from the code. So my solutions are written in a way that is more like what you would do for code that you were intending to maintain for a long period of time: more readable, maintainable, and reusable, and with a lot of test code. It also includes significantly more documentation than I would normally write in order to be more helpful for newer programmers.
@@ -26,7 +45,7 @@ Your session cookie is never transmitted to any location except the Advent of Co
 
 ## Usage
 
-The `npm start` script runs solutions. You can specify the year and day of the solution to run. If the year is omitted, the most recent year that has a directory under `src/solutions` is assumed. If the day is omitted, the most recent day for which a solution module exists in that year folder is assumed. An asterisk (`*`) in place of a year or day means "all".
+The `npm start` script runs solutions. You can specify the year and day of the solution to run. If the year is omitted, the most recent year that has a directory under `src/solutions` is assumed. If the day is omitted, the most recent day for which a solution module exists in that year folder is assumed. An asterisk (`*`) in place of a year or day means "all". Note when running multiple solutions that input download is heavily throttled, so execution will be slow if the cache does not already contain the input.
 
 Run the most recent solution:
 

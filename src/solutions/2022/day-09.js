@@ -29,7 +29,7 @@ const DIRECTIONS = {
  * 2. If the difference is less than 2 in all dimensions, don't move the knot.
  * 3. Compute `Math.sign()` for each delta, then apply that to the knot.
  *
- * After all knots are moved, I concatentate the coordinates of the tail and `add()` it to a `Set`
+ * After all knots are moved, I concatenate the coordinates of the tail and `add()` it to a `Set`
  * of visited coordinates. When all moves have been executed, the size of that `Set` is the answer.
  *
  * @param {string} input - the puzzle input

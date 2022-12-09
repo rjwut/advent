@@ -429,15 +429,24 @@ class SimpleGrid {
   }
 
   /**
-   * Returns a string representation of this `SimpleGrid`.
+   * Returns a string representation of this `SimpleGrid`. It is assumed that each cell's contents
+   * are the same length when printed out; the `coerce` argument can be used to convert values
+   * before rendering them.
    *
+   * @param {Function} [coerce] - a function to convert values before output
    * @returns {string} - the string render
    */
-  toString() {
+  toString(coerce) {
     const rows = new Array(this.#rows);
 
     for (let r = 0; r < this.#rows; r++) {
-      rows[r] = this.#grid.slice(r * this.#cols, (r + 1) * this.#cols).join('');
+      let row = this.#grid.slice(r * this.#cols, (r + 1) * this.#cols);
+
+      if (coerce) {
+        row = row.map(coerce);
+      }
+
+      rows[r] = row.join('');
     }
 
     return rows.join('\n');

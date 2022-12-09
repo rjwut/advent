@@ -1,3 +1,5 @@
+const NAMED_CAPTURE_GROUP_REGEXP = /\(\?<\w+?>.+?\)/;
+
 /**
  * A collection of utility functions that are useful for multiple puzzles.
  */
@@ -73,7 +75,6 @@ const Util = {
     return groups;
   },
 
-
   /**
    * Uses a regular expression to extract records from the given string and
    * return them as an array of objects. The provided regular expression must
@@ -90,7 +91,7 @@ const Util = {
    * ```
    *
    * You may also specify a function for `coerce`, in which case the entire
-   * match groups object is passed in, and the function should returned the
+   * match groups object is passed in, and the function should return the
    * coerced record object.
    *
    * @param {string} string - the string to parse
@@ -99,6 +100,14 @@ const Util = {
    * @returns {Array<Object>} - the extracted records
    */
   match: (string, regexp, coerce = {}) => {
+    if (!regexp.global) {
+      throw new Error('The specified RegExp is not global')
+    }
+
+    if (!NAMED_CAPTURE_GROUP_REGEXP.test(regexp.source)) {
+      throw new Error('The specified RegExp contains no named capture groups');
+    }
+
     let coercions;
 
     switch (typeof coerce) {
@@ -135,7 +144,7 @@ const Util = {
    * Parses the input string as a two-dimensional character grid.
    *
    * Options:
-   * 
+   *
    * - `parseInt` (boolean): whether to parse each cell as an integer
    *
    * @param {string} input - the input string

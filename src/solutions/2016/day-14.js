@@ -5,7 +5,31 @@ const KEY_TARGET = 64;
 /**
  * # [Advent of Code 2016 Day 14](https://adventofcode.com/2016/day/14)
  *
- * @todo Describe solution
+ * I brute forced this one. It's definitely slow. I could try to speed it up. I probably won't.
+ *
+ * My solution works by taking the specified salt and a number indicating how far to stretch the
+ * keys, and producing a "key finder" function. Each time the key finder function is called, it
+ * produces the index of the next key. I just run it 64 times to produce the answer.
+ *
+ * The key finder function has several helper functions:
+ *
+ * - `analyzeNextHash()`: Computes the next hash, then delegates to `analyzeHash()`.
+ * - `analyzeHash()`: Searches the hash for triples (the same character repeated three times
+ *   consecutively). If it finds any, it then checks to see if any are also quints (the same
+ *   character repeated five times consecutively). It then returns the first character found to be
+ *   part of a triple, and all characters that are part of quints.
+ * - `findTriples()`: Runs `analyzeNextHash()` until triples are found, or if an index is
+ *   specified, until that index is reached. Found triples are cached for inspection by the key
+ *   finder.
+ *
+ * The key finder follows this algorithm:
+ *
+ * 1. If the triple cache is empty, run `findTriples()`.
+ * 2. Take the next triple from the cache, then check the other cached triples for quints up to
+ *    1001 positions after the offset. If we run out of cached triples before we reach the end of
+ *    the search range, call `findTriples()` to generate more.
+ * 3. If we find a quint that is the same character as the first triple we consumed, return the
+ *    triple's index.
  *
  * @param {string} input - the puzzle input
  * @returns {Array} - the puzzle answers
@@ -34,7 +58,7 @@ const seekKey = (salt, stretch) => {
 };
 
 /**
- * Returns a funciton that will return the index of the next key each time it
+ * Returns a function that will return the index of the next key each time it
  * is invoked.
  *
  * @param {string} salt - the salt to use
@@ -134,8 +158,8 @@ const buildKeyFinder = (salt, stretch) => {
  * - `firstTriple` (string|undefined): The first character that can be found
  *   three times consecutively in the hash.
  *
- * @param {*} hash 
- * @returns 
+ * @param {*} hash
+ * @returns
  */
 const analyzeHash = hash => {
   const quints = new Set();

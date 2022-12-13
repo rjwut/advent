@@ -11,10 +11,10 @@ const fonts = new Map(); // font cache
  * following glyph block into this function will return `'AOC'`:
  *
  * ```txt
- *  ##   ##   ## 
+ *  ##   ##   ##
  * #  # #  # #  #
- * #  # #  # #   
- * #### #  # #   
+ * #  # #  # #
+ * #### #  # #
  * #  # #  # #  #
  * #  #  ##   ##
  * ```
@@ -48,6 +48,7 @@ const fonts = new Map(); // font cache
  *   - 2016: day 8
  *   - 2019: days 8 and 11
  *   - 2021: day 13
+ *   - 2022: day 10
  * - `font8`: Glyphs are eight lines high, glyphs are at most five columns wide
  *   - 2018: day 10 (example data only)
  * - `font10`: Glyphs are ten lines high and six columns wide

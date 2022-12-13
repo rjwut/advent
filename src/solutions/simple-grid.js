@@ -111,6 +111,41 @@ class SimpleGrid {
   }
 
   /**
+   * Locates the first instance of the given value in the grid (rows first, then columns).
+   *
+   * @param {*} value - the value to find
+   * @returns {Object|null} - an object with `r` and `c` properties, if found; `null` otherwise
+   */
+  coordsOf(value) {
+    const index = this.#grid.indexOf(value);
+    return index === -1 ? null : { r: Math.floor(index / this.#rows), c: index % this.#rows };
+  }
+
+  /**
+   * Returns all values in the grid that fulfill the given predicate. The predicate receives three
+   * arguments:
+   *
+   * - `value` (`any`): The found value
+   * - `r` (`number`): The row index
+   * - `c` (`number`): The column index
+   *
+   * Each element in the returned array is an object with properties matching the predicate
+   * arguments.
+   *
+   * @param {Function} predicate - the filter
+   * @returns {Array<Object>} - the results
+   */
+  findAll(predicate) {
+    const results = [];
+    this.forEach((value, r, c) => {
+      if (predicate(value, r, c)) {
+        results.push({ value, r, c });
+      }
+    });
+    return results;
+  }
+
+  /**
    * Iterates all the values in the grid, in row-major order.
    *
    * @returns {Iterator} - the `Iterator` instance

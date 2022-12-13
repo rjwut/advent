@@ -1,4 +1,4 @@
-const Vm = require('../vm');
+const { split } = require('../util');
 
 /**
  * # [Advent of Code 2015 Day 23](https://adventofcode.com/2015/day/23)
@@ -30,19 +30,12 @@ const Vm = require('../vm');
  * @returns {Array} - the puzzle answers
  */
 const solve = input => {
-  const vm = new Vm();
-  vm.declareRegisters('a', 'b');
-  Object.entries(OPERATIONS).forEach(([ opcode, fn ]) => {
-    vm.parser.opcode(opcode, fn);
-  });
-  vm.parser.argSeparator = ', ';
-  vm.load(input);
-  vm.setTrace(process.stdout);
+  const vm = new Vm(input);
   return [ 0, 1 ].map(a => {
     vm.reset();
-    vm.setRegister('a', a);
+    vm.set('a', a);
     vm.run();
-    return vm.getRegister('b');
+    return vm.get('b');
   });
 };
 
@@ -54,7 +47,8 @@ const OPERATIONS = {
    * @param {Array} args - the register to modify
    */
   hlf: (vm, [ r ]) => {
-    vm.setRegister(r, Math.floor(vm.getRegister(r) / 2));
+    vm.set(r, Math.floor(vm.get(r) / 2));
+    vm.movePointer(1);
   },
 
   /**
@@ -64,7 +58,8 @@ const OPERATIONS = {
    * @param {Array} args - the register to modify
    */
   tpl: (vm, [ r ]) => {
-    vm.setRegister(r, vm.getRegister(r) * 3);
+    vm.set(r, vm.get(r) * 3);
+    vm.movePointer(1);
   },
 
   /**
@@ -74,7 +69,8 @@ const OPERATIONS = {
    * @param {Array} args - the register to modify
    */
   inc: (vm, [ r ]) => {
-    vm.addRegister(r, 1);
+    vm.set(r, vm.get(r) + 1);
+    vm.movePointer(1);
   },
 
   /**
@@ -84,7 +80,11 @@ const OPERATIONS = {
    * @param {Array} args - the pointer offset
    */
   jmp: (vm, [ offset ]) => {
-    vm.ip += vm.eval(offset);
+    if (typeof offset === 'string') {
+      offset = vm.get(offset);
+    }
+
+    vm.movePointer(offset);
   },
 
   /**
@@ -94,8 +94,10 @@ const OPERATIONS = {
    * @param {Array} args - the register to check and the pointer offset
    */
   jie: (vm, [ r, offset ]) => {
-    if (vm.eval(r) % 2 === 0) {
+    if (vm.get(r) % 2 === 0) {
       OPERATIONS.jmp(vm, [ offset ]);
+    } else {
+      vm.movePointer(1);
     }
   },
 
@@ -106,10 +108,102 @@ const OPERATIONS = {
    * @param {Array} args - the register to check and the pointer offset
    */
   jio: (vm, [ r, offset ]) => {
-    if (vm.eval(r) === 1) {
+    if (vm.get(r) === 1) {
       OPERATIONS.jmp(vm, [ offset ]);
+    } else {
+      vm.movePointer(1);
     }
   },
+};
+
+/**
+ * The virtual machine that solves the puzzle.
+ */
+class Vm {
+  #program;
+  #registers;
+  #pointer;
+
+  /**
+   * Create a new `Vm`.
+   *
+   * @param {string} source - the puzzle input (the program source)
+   */
+  constructor(source) {
+    this.#program = split(source).map(parseLine);
+    this.reset();
+  }
+
+  /**
+   * Retrieves the value of the named register.
+   *
+   * @param {string} r - the register
+   * @returns {number} - the value
+   */
+  get(r) {
+    return this.#registers[r];
+  }
+
+  /**
+   * Sets the value of the named register.
+   *
+   * @param {string} r - the register
+   * @param {number} value - the value to set
+   */
+  set(r, value) {
+    this.#registers[r] = value;
+  }
+
+  /**
+   * Moves the instruction pointer by the given offset.
+   *
+   * @param {number} offset - the pointer offset
+   */
+  movePointer(offset) {
+    this.#pointer += offset;
+  }
+
+  /**
+   * Executes the program.
+   */
+  run() {
+    this.#pointer = 0;
+
+    while (this.#pointer >= 0 && this.#pointer < this.#program.length) {
+      const instruction = this.#program[this.#pointer];
+      OPERATIONS[instruction.op](this, instruction.args);
+    }
+  }
+
+  /**
+   * Sets the registers back to `0`.
+   */
+  reset() {
+    this.#registers = { a: 0, b: 0 };
+  }
+}
+
+/**
+ * Parses a single line from the puzzle input into an instruction object.
+ *
+ * @param {string} line - the line to parse
+ * @returns {Object} - the instruction object
+ */
+const parseLine = line => {
+  const spacePos = line.indexOf(' ');
+  const op = line.substring(0, spacePos);
+  const args = line.substring(spacePos + 1)
+    .split(',')
+    .map(arg => {
+      arg = arg.trim();
+
+      if (arg.startsWith('+') || arg.startsWith('-')) {
+        return parseInt(arg, 10);
+      }
+
+      return arg;
+    });
+  return { op, args };
 };
 
 module.exports = solve;

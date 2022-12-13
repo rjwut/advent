@@ -147,18 +147,21 @@ const DEFAULT_BREAKPOINT_CONDITION = () => true;
  *
  * ## Default Parsing and Execution Behavior
  *
- * The `DefaultParser` expects the source to be a mutli-line string. (Windows line endings are
- * automatically converted to newlines.) Each line is an instruction consisting of one or more
- * space-separated tokens. The first token is an opcode; any remaining ones are either integers or
- * the names of registers. Before parsing, opcodes must be registered by invoking
- * `DefaultParser.opcode()`. This is how you provide the behavior for each opcode. If an unknown
- * opcode is encountered, an error will be thrown.
+ * The `DefaultParser` expects the source to be a mutli-line string, where each line represents an
+ * instruction. (Windows line endings are automatically converted to newlines.) The line starts
+ * with an opcode token, which identifies the operation to perform. The instruction may also have
+ * arguments; if they are present, they come after the opcode token, with a separator between them
+ * (a space by default). There are also separaters between the arguments (also a space by default).
+ *
+ * Before parsing, opcodes must be registered by invoking `DefaultParser.opcode()`. This is how you
+ * provide the behavior for each opcode. If an unknown opcode is encountered, an error will be
+ * thrown.
  *
  * The `opcode()` method expects two arguments: the opcode to register, and a function implementing
  * that operation. The implementation function will receive to arguments when invoked: a reference
  * to the `Vm` instance, and an array of the arguments for the instruction. Each argument is either
  * an integer or a string naming a register. (An argument token will be considered an integer if it
- * matches the `RegExp` `/^-?\d+$/`). If the parser encounters an unknown register name, it will
+ * matches the `RegExp` `/^[+-]?\d+$/`). If the parser encounters an unknown register name, it will
  * throw an `Error`. The `Vm.eval()` method will automatically coerce arguments to their actual
  * values for you.
  *

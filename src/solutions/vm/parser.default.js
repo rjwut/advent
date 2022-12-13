@@ -1,13 +1,15 @@
 const Parser = require('./parser');
 const DefaultProgram = require('./program.default');
 
-const INTEGER_REGEXP = /^-?\d+$/;
+const INTEGER_REGEXP = /^[+-]?\d+$/;
 
 /**
  * Default implementation of `Parser`.
  */
 class DefaultParser extends Parser {
   #opcodeMap;
+  #opcodeSeparator;
+  #argSeparator;
 
   /**
    * Creates a new `DefaultParser`.
@@ -15,6 +17,8 @@ class DefaultParser extends Parser {
   constructor() {
     super();
     this.#opcodeMap = new Map();
+    this.#opcodeSeparator = ' ';
+    this.#argSeparator = ' ';
   }
 
   /**
@@ -40,17 +44,57 @@ class DefaultParser extends Parser {
   }
 
   /**
+   * @returns {string} - the string that separates the opcode from the arguments
+   */
+  get opcodeSeparator() {
+    return this.#opcodeSeparator;
+  }
+
+  /**
+   * @param {string} - the new opcode separator
+   * @throws {TypeError} - if the separator is not a string
+   */
+  set opcodeSeparator(opcodeSeparator) {
+    if (typeof opcodeSeparator !== 'string') {
+      throw new TypeError('Opcode separator must be a string');
+    }
+
+    this.#opcodeSeparator = opcodeSeparator;
+  }
+
+  /**
+   * @returns {string} - the string that separates arguments
+   */
+  get argSeparator() {
+    return this.#argSeparator;
+  }
+
+  /**
+   * @param {string} - the new arg separator
+   * @throws {TypeError} - if the separator is not a string
+   */
+  set argSeparator(argSeparator) {
+    if (typeof argSeparator !== 'string') {
+      throw new TypeError('Argument separator must be a string');
+    }
+
+    this.#argSeparator = argSeparator;
+  }
+
+  /**
    * Default implementation of program parsing. This assumes:
    *
    * - The program is a string which contains lines delimited by `\n`. (Windows line endings are
    *   converted automatically.)
    * - Each line is a single instruction.
-   * - Instructions are a list of tokens delimited by spaces.
-   * - The first token is an opcode, identifying an operation to perform.
-   * - The remaining tokens are arguments, which are either integers, or strings naming registers.
+   * - An instruction starts with an opcode token, identifying an operation to perform.
+   * - If there are arguments for the instruction, the opcode token is followed by an opcode
+   *   separator (a space by default), followed by the arguments.
+   * - Arguments are either integers, or strings naming registers.
+   * - Arguments are delimited by an argument separator (a space by default).
    *
    * @param {string} source - the source code to parse
-   * @returns {DefaultProgram} - the resulting DefaultProgram
+   * @returns {DefaultProgram} - the resulting program
    */
   parse(source) {
     return new DefaultProgram(
@@ -86,7 +130,18 @@ class DefaultParser extends Parser {
    * @returns {Object} - the parsed instruction
    */
   #parseLine(line) {
-    const [ opcode, ...args ] = line.split(' ');
+    const sepIndex = line.indexOf(this.#opcodeSeparator);
+    let opcode, args;
+
+    if (sepIndex === -1) {
+      opcode = line;
+      args = [];
+    } else {
+      opcode = line.substring(0, sepIndex);
+      args = line.substring(sepIndex + this.#opcodeSeparator.length)
+        .split(this.#argSeparator);
+    }
+
     const fn = this.getOperation(opcode);
     args.forEach((arg, i) => {
       if (INTEGER_REGEXP.test(arg)) {

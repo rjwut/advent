@@ -1,4 +1,4 @@
-const intcode = require('./intcode');
+const IntcodeVm = require('./intcode');
 const InfiniteGrid = require('../infinite-grid');
 
 // Represents the four possible directions the `Droid` can mvoe.
@@ -224,8 +224,7 @@ const oxygenate = (grid, o2) => {
  * location.
  */
 class Droid {
-  #api;
-  #state;
+  #vm;
   coords = [ 0, 0 ];
 
   /**
@@ -234,22 +233,22 @@ class Droid {
    * @param {string} program - the Intcode program for the `Droid`.
    */
   constructor(program) {
-    const result = intcode(program);
-    this.#api = result.api;
-    this.#state = result.state;
+    this.#vm = new IntcodeVm();
+    this.#vm.load(program);
   }
 
   /**
    * Moves the `Droid` in the given direction and returns the result. The
    * result values are enumerated in `Output`.
    *
-   * @param {*} direction 
-   * @returns 
+   * @param {*} direction
+   * @returns {number} - `0` for a wall, `1` for empty space, `2` for the O2
+   * system
    */
   move(direction) {
-    this.#api.input(direction.id);
-    this.#api.run();
-    const result = this.#state.output.shift();
+    this.#vm.enqueueInput(direction.id);
+    this.#vm.run();
+    const result = this.#vm.dequeueOutput();
 
     if (result !== Output.WALL) {
       this.coords = getAdjacentCoords(this.coords, direction);
@@ -277,9 +276,9 @@ class Grid {
 
   /**
    * Retrieves the `Cell` at the given coordinates. If no `Cell` exists there,
-   * a new `Empty` `Cell` is created.
+   * a new `EMPTY` `Cell` is created.
    *
-   * @param {Array} coords - the coordinates of the `Cell` to retrieve 
+   * @param {Array} coords - the coordinates of the `Cell` to retrieve
    * @returns {Cell} - the `Cell` at those coordinates
    */
   get(coords) {
@@ -300,8 +299,8 @@ class Grid {
    * @param {Array} coords - the coordinates from which the `Droid` attempted
    * to move
    * @param {Object} direction - the direction in which the `Droid` attempted
-   * to move 
-   * @param {boolean} hasWall - whether the `Droid` was stopped by a wall 
+   * to move
+   * @param {boolean} hasWall - whether the `Droid` was stopped by a wall
    */
   setWall(coords, direction, hasWall) {
     const coords1 = getAdjacentCoords(coords, direction);

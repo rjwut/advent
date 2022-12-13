@@ -1,4 +1,4 @@
-const intcode = require('./intcode');
+const IntcodeVm = require('./intcode');
 
 const Tile = {
   EMPTY:  0,
@@ -27,6 +27,8 @@ const SCREEN_SIZE = { x: 42, y: 25 };
  * the result into the program.
  *
  * @param {string} input - the puzzle input
+ * @param {boolean} debug - if `true`, the game is rendered on the screen for
+ * part 2
  * @returns {Array} - the puzzle answers
  */
 module.exports = (input, debug) => {
@@ -41,13 +43,15 @@ module.exports = (input, debug) => {
  * @returns {number} - the number of bricks
  */
 const part1 = program => {
-  const { api, state } = intcode(program);
-  api.run();
+  const vm = new IntcodeVm();
+  vm.load(program);
+  vm.run();
   const blocks = new Set();
+  const output = vm.dequeueAllOutput();
 
-  for (let i = 0; i < state.output.length; i += 3) {
-    const coords = state.output.slice(i, i + 2);
-    const tile = state.output[i + 2];
+  for (let i = 0; i < output.length; i += 3) {
+    const coords = output.slice(i, i + 2);
+    const tile = output[i + 2];
     const value = coords.join();
 
     if (tile === Tile.BLOCK) {
@@ -74,9 +78,7 @@ const part2 = (program, debug) => new BricksGame(program, debug).run();
  * Tracks game state and handles program I/O.
  */
 class BricksGame {
-  #api;
-  #state;
-  #outputOffset = 0;
+  #vm;
   #score = 0;
   #ballPos;
   #paddlePos;
@@ -89,10 +91,9 @@ class BricksGame {
    * @param {boolean} display - whether to show the game in progress on the screen
    */
   constructor(program, display) {
-    const vm = intcode(program);
-    this.#api = vm.api;
-    this.#state = vm.state;
-    this.#state.memory[0] = 2;
+    this.#vm = new IntcodeVm();
+    this.#vm.load(program);
+    this.#vm.program.write(0, 2);
     this.#screen = display ? new Screen() : new NoopScreen();
   }
 
@@ -102,8 +103,7 @@ class BricksGame {
    * output is enabled, it will also write all tiles to the `Screen`.
    */
   #consumeOutput() {
-    const output = this.#state.output.slice(this.#outputOffset);
-    this.#outputOffset = this.#state.output.length;
+    const output = this.#vm.dequeueAllOutput();
 
     for (let i = 0; i < output.length; i += 3) {
       const coords = output.slice(i, i + 2);
@@ -133,11 +133,11 @@ class BricksGame {
    */
   run() {
     do {
-      this.#api.run();
+      this.#vm.run();
       this.#consumeOutput();
       this.#screen.render();
 
-      if (this.#state.status === 'terminated') {
+      if (this.#vm.state === 'terminated') {
         break;
       }
 
@@ -147,7 +147,7 @@ class BricksGame {
         move = Math.sign(this.#ballPos - this.#paddlePos);
       }
 
-      this.#api.input(move);
+      this.#vm.enqueueInput(move);
     } while (true);
 
     return this.#score;

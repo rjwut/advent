@@ -1,4 +1,4 @@
-const intcode = require('./intcode-ascii');
+const intcode = require('./intcode/ascii');
 const makeDroid = require('./day-25.droid');
 
 /**
@@ -10,7 +10,7 @@ const makeDroid = require('./day-25.droid');
  * program to find the spot where the code is output, and trace back from there
  * to determine the code, but that doesn't seem as fun, so my solution actually
  * runs the program and "wins" legitimately. It does so in three phases:
- * 
+ *
  * 1. **Explore**: Move around the map finding room and items. This phase ends
  *    when all eight safe items have been collected and the "Security
  *    Checkpoint" room has been discovered.
@@ -23,7 +23,7 @@ const makeDroid = require('./day-25.droid');
  *
  * ## Parsing
  *
- * I use my `intcode-ascii` module to translate commands to ASCII codes and
+ * I use my `intcode/ascii` module to translate commands to ASCII codes and
  * send them to the Intcode program, and then convert the output ASCII codes
  * back to text. I then have to parse the text to extract the information I
  * need in order to appropriately command the droid. The **Output Syntax**

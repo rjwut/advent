@@ -1,4 +1,4 @@
-const intcode = require('./intcode');
+const IntcodeVm = require('.');
 
 /**
  * A wrapper around the Intcode interpreter to permit ASCII input and output.
@@ -19,7 +19,8 @@ const intcode = require('./intcode');
  * @returns {Object} - the ASCII Intcode API
  */
 module.exports = (program, encoding = 'ascii') => {
-  const { api, state } = intcode(program);
+  const vm = new IntcodeVm();
+  vm.load(program);
 
   /**
    * Translates the Intcode output to the desired output format.
@@ -28,7 +29,7 @@ module.exports = (program, encoding = 'ascii') => {
    * value
    */
   const parseOutput = () => {
-    const raw = state.output.splice(0, state.output.length);
+    const raw = vm.dequeueAllOutput();
 
     if (encoding === 'raw') {
       return raw;
@@ -47,7 +48,7 @@ module.exports = (program, encoding = 'ascii') => {
      * @throws {Error} - if the program is terminated or blocked
      */
     run: () => {
-      api.run();
+      vm.run();
       return parseOutput();
     },
 
@@ -60,16 +61,16 @@ module.exports = (program, encoding = 'ascii') => {
      */
      send: txt => {
       [ ...txt ].forEach(chr => {
-        api.input(chr.charCodeAt(0));
+        vm.enqueueInput(chr.charCodeAt(0));
       });
-      api.input(10);
-      api.run();
+      vm.enqueueInput(10);
+      vm.run();
       return parseOutput();
     },
 
     /**
-     * Exposes the Intcode interpreter state.
+     * Exposes the Intcode VM.
      */
-    state,
+    vm,
   };
 };

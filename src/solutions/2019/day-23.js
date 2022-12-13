@@ -1,4 +1,4 @@
-const intcode = require('./intcode');
+const IntcodeVm = require('./intcode');
 
 const NETWORK_SIZE = 50;
 
@@ -94,7 +94,7 @@ const part2 = input => {
         if (prevY === lastPacket[1]) {
           return prevY;
         }
-  
+
         sendTo0(lastPacket);
         prevY = lastPacket[1];
       }
@@ -127,14 +127,11 @@ const runNetwork = (program, nat) => {
     network = new Array(NETWORK_SIZE);
 
     for (let address = 0; address < NETWORK_SIZE; address++) {
-      const { api, state } = intcode(program);
-      api.input(address);
-      api.run();
-      network[address] = {
-        api,
-        state,
-        inputQueue: [],
-      };
+      const vm = new IntcodeVm();
+      vm.load(program);
+      vm.enqueueInput(address);
+      vm.run();
+      network[address] = { vm, inputQueue: [] };
     }
   };
 
@@ -160,10 +157,10 @@ const runNetwork = (program, nat) => {
     let idle = true;
 
     for (const computer of network) {
-      while (computer.state.output.length) {
+      while (computer.vm.outputLength) {
         idle = false;
-        const recipient = computer.state.output.shift();
-        const payload = [ computer.state.output.shift(), computer.state.output.shift() ];
+        const recipient = computer.vm.dequeueOutput();
+        const payload = [ computer.vm.dequeueOutput(), computer.vm.dequeueOutput() ];
 
         if (recipient === 255) {
           const result = nat.onPacket(payload);
@@ -189,13 +186,13 @@ const runNetwork = (program, nat) => {
     network.forEach(computer => {
       if (computer.inputQueue.length) {
         const packet = computer.inputQueue.shift();
-        computer.api.input(packet[0]);
-        computer.api.input(packet[1]);
+        computer.vm.enqueueInput(packet[0]);
+        computer.vm.enqueueInput(packet[1]);
       } else {
-        computer.api.input(-1);
+        computer.vm.enqueueInput(-1);
       }
 
-      computer.api.run();
+      computer.vm.run();
     });
   };
 

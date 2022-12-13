@@ -1,5 +1,5 @@
 const { permute } = require('../util');
-const intcode = require('./intcode');
+const IntcodeVm = require('./intcode');
 
 const PHASE_SETTINGS = [
   [ 0, 1, 2, 3, 4 ],
@@ -72,19 +72,21 @@ const tryPermutation = (program, permutation) => {
   const amplifiers = [];
 
   for (let phaseSetting of permutation) {
-    const amplifier = intcode(program);
-    amplifier.api.input(phaseSetting);
+    const amplifier = new IntcodeVm();
+    amplifier.load(program);
+    amplifier.enqueueInput(phaseSetting);
     amplifiers.push(amplifier);
   }
 
   const last = amplifiers[amplifiers.length - 1];
   let signal = 0;
 
-  while (last.state.status !== 'terminated') {
+  while (last.state !== 'terminated') {
     for (let amplifier of amplifiers) {
-      amplifier.api.input(signal);
-      amplifier.api.run();
-      signal = amplifier.state.output[amplifier.state.output.length - 1];
+      amplifier.enqueueInput(signal);
+      amplifier.run();
+      const output = amplifier.dequeueAllOutput();
+      signal = output[output.length - 1];
     }
   }
 

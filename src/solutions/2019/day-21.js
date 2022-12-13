@@ -1,4 +1,4 @@
-const intcode = require('./intcode-ascii');
+const intcode = require('./intcode/ascii');
 
 /**
  * # [Advent of Code 2019 Day 21](https://adventofcode.com/2019/day/21)
@@ -6,7 +6,7 @@ const intcode = require('./intcode-ascii');
  * For each part, I ended up just manually testing it to see what the output
  * was so that I could figure out a strategy for jumping over the holes. Then I
  * just wrote springscript program to do it. I leveraged my existing
- * `intcode-ascii` module, with a change to that I could get both the original
+ * `intcode/ascii` module, with a change to that I could get both the original
  * raw Intcode output and an ASCII-encoded version.
  *
  * @param {string} input - the puzzle input

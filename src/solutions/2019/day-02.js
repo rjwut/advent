@@ -1,4 +1,4 @@
-const intcode = require('./intcode');
+const IntcodeVm = require('./intcode');
 
 const TARGET_OUTPUT = 19690720;
 
@@ -52,11 +52,12 @@ module.exports = input => [ part1, part2 ].map(fn => fn(input));
  * @returns {number} - the value at position `0`
  */
 const part1 = program => {
-  const { state, api } = intcode(program);
-  state.memory[1] = 12;
-  state.memory[2] = 2;
-  api.run();
-  return state.memory[0];
+  const vm = new IntcodeVm();
+  vm.load(program);
+  vm.program.write(1, 12);
+  vm.program.write(2, 2);
+  vm.run();
+  return vm.program.read(0);
 };
 
 /**
@@ -75,12 +76,13 @@ const part2 = (program, debug) => {
 
   for (let noun = 0; noun < 100; noun++) {
     for (let verb = 0; verb < 100; verb++) {
-      const { state, api } = intcode(program);
-      state.memory[1] = noun;
-      state.memory[2] = verb;
-      api.run();
+      const vm = new IntcodeVm();
+      vm.load(program);
+      vm.program.write(1, noun);
+      vm.program.write(2, verb);
+      vm.run();
 
-      if (state.memory[0] === TARGET_OUTPUT) {
+      if (vm.program.read(0) === TARGET_OUTPUT) {
         return 100 * noun + verb;
       }
     }

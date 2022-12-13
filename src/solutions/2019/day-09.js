@@ -1,4 +1,4 @@
-const intcode = require('./intcode');
+const IntcodeVm = require('./intcode');
 
 /**
  * This puzzle has us adding a new feature to the Intcode computer; the actual
@@ -14,8 +14,10 @@ const intcode = require('./intcode');
 module.exports = input => [ 1, 2 ].map(value => run(input, value));
 
 const run = (program, input) => {
-  const { api, state } = intcode(program);
-  api.input(input);
-  api.run();
-  return state.output[0];
+  const vm = new IntcodeVm();
+  vm.load(program);
+  vm.enqueueInput(input);
+  vm.run();
+  const output = vm.dequeueAllOutput();
+  return output[output.length - 1];
 };

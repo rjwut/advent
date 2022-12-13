@@ -1,4 +1,4 @@
-const intcode = require('./intcode');
+const IntcodeVm = require('./intcode');
 
 /**
  * # [Advent of Code 2019 Day 19](https://adventofcode.com/2019/day/19)
@@ -51,7 +51,7 @@ const part1 = query => {
  * coordinate
  * @returns {number} - the answer for part two
  */
- const part2 = query => {
+const part2 = query => {
   const coords = { x: 0, y: 0 };
   const ok = { x: false, y: false };
   let axis = 'x';
@@ -86,10 +86,11 @@ const part1 = query => {
  */
 const buildQueryFunction = source => {
   return (x, y) => {
-    const { api, state } = intcode(source);
-    api.input(x);
-    api.input(y);
-    api.run();
-    return state.output.shift();
+    const vm = new IntcodeVm();
+    vm.load(source);
+    vm.enqueueInput(x);
+    vm.enqueueInput(y);
+    vm.run();
+    return vm.dequeueOutput();
   };
 };

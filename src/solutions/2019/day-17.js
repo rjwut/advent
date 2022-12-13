@@ -1,5 +1,5 @@
 const { parseGrid } = require('../util');
-const intcode = require('./intcode-ascii');
+const intcode = require('./intcode/ascii');
 
 const DIRECTIONS = [
   [ -1,  0 ], // north
@@ -309,7 +309,7 @@ const findPath = ({ grid, width, height, robot }) => {
  * - `fns`: An array containing three functions, each of which is a string
  *   describing a segment chain.
  *
- * @param {string} path - the path to break down into functions 
+ * @param {string} path - the path to break down into functions
  * @param {Array} [fns=[]] - the list of existing functions
  * @returns {Object} - the functions and main routine
  */
@@ -360,13 +360,9 @@ const buildFunctions = (path, fns = []) => {
  * @returns {number} - the amount of dust collected by the robot
  */
 const runRobot = (program, { main, fns }) => {
-  const { send, state } = intcode(program, 'raw');
-  state.memory[0] = 2;
-  const lines = [
-    main,
-    ...fns,
-    'n',
-  ];
+  const { send, vm } = intcode(program, 'raw');
+  vm.program.write(0, 2);
+  const lines = [ main, ...fns, 'n' ];
   const output = send(lines.join('\n') + '\n');
   return output[output.length - 1];
 };

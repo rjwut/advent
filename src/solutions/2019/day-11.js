@@ -1,5 +1,5 @@
-const intcode = require('./intcode');
-const BooleanInfiniteGrid = require('../boolean-infinite-grid');
+const IntcodeVm = require('./intcode');
+const InfiniteGrid = require('../infinite-grid');
 const ocr = require('../ocr');
 
 const DIRECTIONS = [
@@ -43,12 +43,13 @@ const part1 = program => {
  * Solves part two ofthe puzzle by assuming the starting panel is white and
  * reporting the registration identifier painted by the robot.
  *
- * @param {string} program - the puzzle input (the Intcode program) 
+ * @param {string} program - the puzzle input (the Intcode program)
  * @returns {string} - the registration identifier
  */
 const part2 = async program => {
   const panels = paint(program, 1);
-  return await ocr(panels.toString());
+  const glyphs = panels.toString({ translate: panel => panel ? '#' : '.' });
+  return ocr(glyphs);
 };
 
 /**
@@ -60,7 +61,7 @@ const part2 = async program => {
  * @returns {BooleanInfiniteGrid} - the grid of painted panels
  */
 const paint = (program, startPanelColor) => {
-  const panels = new BooleanInfiniteGrid();
+  const panels = new InfiniteGrid();
 
   if (startPanelColor === 1) {
     panels.put([ 0, 0 ], true);
@@ -68,15 +69,17 @@ const paint = (program, startPanelColor) => {
 
   let coords = [ 0, 0 ];
   let dirIndex = 0;
-  const robot = intcode(program);
+  const robot = new IntcodeVm();
+  robot.load(program);
   const getColor = () => panels.get(coords) ? 1 : 0;
   const setColor = color => panels.put(coords, color === 1);
 
   do {
-    robot.api.input(getColor());
-    robot.api.run();
-    setColor(robot.state.output[robot.state.output.length - 2]);
-    const turn = robot.state.output[robot.state.output.length - 1];
+    robot.enqueueInput(getColor());
+    robot.run();
+    const output = robot.dequeueAllOutput();
+    setColor(output[0]);
+    const turn = output[1];
     dirIndex += turn === 0 ? -1 : 1;
 
     if (dirIndex === -1) {
@@ -88,7 +91,7 @@ const paint = (program, startPanelColor) => {
     }
 
     coords = coords.map((coord, i) => coord + DIRECTIONS[dirIndex][i]);
-  } while (robot.state.status !== 'terminated');
+  } while (robot.state !== 'terminated');
 
   return panels;
 };

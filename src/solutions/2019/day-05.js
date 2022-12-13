@@ -1,4 +1,4 @@
-const intcode = require('./intcode');
+const IntcodeVm = require('./intcode');
 
 /**
  * This day's puzzle takes the Intcode interpreter from day 2 and adds some
@@ -25,7 +25,7 @@ const intcode = require('./intcode');
  * by a diagnostic code. The code is our puzzle answer.
  *
  * Part two introduces four new opcodes:
- * 
+ *
  * - `5`: If the first parameter is non-zero, move the instruction pointer to
  *   the address given by the second parameter. Otherwise, do nothing. Note
  *   that the target address can be specified in either mode. (Mode `0` means
@@ -54,15 +54,18 @@ const intcode = require('./intcode');
  module.exports = input => [ part1, part2 ].map(fn => fn(input));
 
 const part1 = program => {
-  const { state, api } = intcode(program);
-  api.input(1);
-  api.run();
-  return state.output[state.output.length - 1];
+  const vm = new IntcodeVm();
+  vm.load(program);
+  vm.enqueueInput(1);
+  vm.run();
+  const output = vm.dequeueAllOutput();
+  return output[output.length - 1];
 };
 
 const part2 = program => {
-  const { state, api } = intcode(program);
-  api.input(5);
-  api.run();
-  return state.output[0];
+  const vm = new IntcodeVm();
+  vm.load(program);
+  vm.enqueueInput(5);
+  vm.run();
+  return vm.dequeueOutput();
 };

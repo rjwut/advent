@@ -58,7 +58,7 @@ class InfiniteGrid extends AbstractInfiniteGrid {
       forEach: callback => {
         cells.forEach((value, key) => callback(key, value));
       },
-      translate: value => value === undefined ? ',' : String(value).charAt(0),
+      translate: value => value === undefined ? '.' : String(value).charAt(0),
     };
     super(storage, copyFrom);
   }

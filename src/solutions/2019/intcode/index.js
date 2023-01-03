@@ -7,7 +7,6 @@ const IntcodeParser = require('./parser');
 class IntcodeVm extends Vm {
   #parameterMode;
   #relativeBase;
-  #output;
 
   /**
    * Creates a new Intcode VM.
@@ -16,22 +15,10 @@ class IntcodeVm extends Vm {
     super();
     this.#parameterMode = 0;
     this.#relativeBase = 0;
-    this.#output = [];
     this.parser = new IntcodeParser();
     this.on('terminated', error => {
       this.trace(`TERMINATED ${error ? `ABNORMALLY:\n${error.stack}` : 'NORMALLY'}`);
     });
-  }
-
-  /**
-   * Collects the output into an array.
-   *
-   * @param {number} value - the value to output
-   * @throws {TypeError} - if `value` is not an integer
-   */
-  output(value) {
-    super.output(value);
-    this.#output.push(value);
   }
 
   /**
@@ -94,36 +81,6 @@ class IntcodeVm extends Vm {
    */
   set relativeBase(relativeBase) {
     this.#relativeBase = relativeBase;
-  }
-
-  /**
-   * @returns {number} - the number of entries in the output queue
-   */
-  get outputLength() {
-    return this.#output.length;
-  }
-
-  /**
-   * @returns {Array<number>} - a copy of the output array (the output is not dequeued)
-   */
-  cloneOutput() {
-    return [ ...this.#output ];
-  }
-
-  /**
-   * @returns {number} - the next dequeued output value
-   */
-  dequeueOutput() {
-    return this.#output.shift();
-  }
-
-  /**
-   * @returns {Array<number>} - a copy of the output array (which is now dequeued)
-   */
-  dequeueAllOutput() {
-    const output = this.#output;
-    this.#output = [];
-    return output;
   }
 }
 

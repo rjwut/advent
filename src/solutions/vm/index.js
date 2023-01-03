@@ -2,202 +2,25 @@ const { EventEmitter } = require('events');
 const Parser = require('./parser.default');
 
 const DEFAULT_IP_NAME = 'ip';
-const DEFAULT_BREAKPOINT_CONDITION = () => true;
+const IP_INCREMENT_VALUES = new Set([ 'never', 'unchanged', 'always' ]);
 
 /**
- * This class lets you define and build a simple virtual machine that executes programs written in
- * a customized machine language. You can programmatically declare the registers and operations the
- * `Vm` supports, and you can extend the class to create additional functionality.
- *
- * ## Classes and Interfaces
- *
- * - `Vm`: This class represents the entire virtual machine and has methods for controlling it.
- * - `Parser`: An interface for objects which can parse source code into instructions. Its
- *   `parse()` method is expected to accept the source code and return an instance of `Program`.
- * - `DefaultParser`: The default implementation of the `Parser` interface. See the
- *   **Default Implementation** section below for details.
- * - `Program`: An interface which represents the code being executed. Can execute any single
- *   instruction given its offset.
- * - `DefaultProgram`: The default implementation of `Program` which will be used when another is
- *   not provided. See the **Default Implementation** section below for details.
- *
- * Since JavaScript does not have the explicit concept of an interface, they are implemented as
- * classes whose methods throw `Error`s. When you extend these interfaces, you must override the
- * methods with your own implementations.
- *
- * ## Basic Usage
- *
- * The basic steps for using a `Vm` is as follows:
- *
- * 1. Instantiate the `Vm`.
- * 2. `load()` the source code.
- * 3. Declare any needed registers.
- * 4. Declare opcodes.
- * 4. Invoke `run()`.
- * 5. Inspect the `Vm` for results.
- *
- * For example:
- *
- * - The program is a string stored in a variable named `source`.
- * - The program expects there to be two registers named `a` and `b`.
- * - The program has two opcodes, `add` and `jump`, which you have implemented as functions with
- *   the same names.
- * - After running the program, you wish to print out the value of the `a` register.
- *
- * This is what that would look like:
- *
- * ```js
- * const vm = new Vm();
- * vm.declareRegisters('a', 'b');
- * vm.parser.opcode('add', add);
- * vm.parser.opcode('jump', jump);
- * vm.load(source);
- * vm.run();
- * console.log(vm.getRegister('a'));
- * ```
- *
- * ## Registers
- *
- * The `Vm` will have one or more registers. By default, the only register is one called `ip`, the
- * instruction pointer. This register keeps track of the program offset where the `Vm` is currently
- * executing. You may rename this register by calling `declareIp()`. Programs may directly
- * manipulate the instruction pointer like any other register. The value of the instruction pointer
- * register, whatever its name, is also exposed by the `Vm`'s `ip` property.
- *
- * You may declare additional registers to be used by programs executed by the `Vm` by invoking the
- * `declareRegisters()` method. The instruction pointer register need not be included in the list
- * of registers you provide to this method. Unlike `declareIp()`, invoking it multiple times does
- * not remove any previously-declared registers. Registers can be manipulated on the `Vm` instance
- * via the `getRegister()`, `setRegister()`, and `addRegister()` methods.
- *
- * All registers start with a value of `0`. If the program references a register during execution
- * that has not been declared, it will throw an `Error`.
- *
- * ## Execution
- *
- * Execute your program by invoking `run()`. This will cause the `Vm` to execute instructions until
- * one of the following occurs:
- *
- * - The program terminates normally.
- * - An error occurs.
- * - The VM becomes blocked on input. (See the **Input** section below.)
- * - The VM encounters a breakpoint. (See the **Breakpoints** section below.)
- *
- * The `state` property is a string that describes the current state of the `Vm`:
- *
- * - `'ready'`: The `Vm` is ready to execute instructions. You may invoke `step()` or `run()` to
- *    proceed.
- * - `'running'`: The `Vm` is currently executing instructions.
- * - `'blocked'`: The `Vm` is blocked on input. You must invoke `enqueueInput()`, which will change
- *   the state to `'ready'`.
- * - `'terminated'`: The `Vm` has ended (possibly with an error).
- *
- * ## Events
- *
- * The `Vm` class extends `EventEmitter`. These are the events which it can emit during execution:
- *
- * - `prestep`: The `Vm` is about to execute an instruction.
- * - `poststep`: The `Vm` just finished executing an instruction. Not invoked if the instruction
- *   threw an error.
- * - `output`: The `Vm` has produced an output value (provided as an argument).
- * - `blocked`: The `Vm` is blocked on input.
- * - `breakpoint`: The `Vm` has paused on a breakpoint. Breakpoints are only considered while the
- *   `Vm` is `run()`ing.
- * - `unblocked`: The `Vm` is no longer blocked on input.
- * - `terminated`: The `Vm` has terminated. If termination was the result of an `Error`, it will
- *   be provided as an argument.
- *
- * Use the standard `EventEmitter` methods to subscribe to these events.
- *
- * ## Input
- *
- * The `enqueueInput()` method allows you to submit input to the program, which is queued until the
- * program requests it. If the program requests input and the input queue is empty, it will stop
- * executing. This is referred to as being "blocked on input." You may invoke `enqueueInput()` to
- * unblock it, then invoke `run()` or `step()` to continue execution. Only integers are allowed as
- * input values.
- *
- * When writing operation implementations, you may retrieve queued input with the `readInput()`
- * method. If no input is available, `readInput()` may return `undefined`; in this case, you should
- * immediately exit the instruction and not move in instruction pointer.
- *
- * ## Output
- *
- * The `Vm` emits an `output` event each time output is produced; register a listener for this
- * event to receive the output. To emit output in your operation implementation, invoke the
- * `output()` method. Only integers are valid output values.
- *
- * ## `Parser`
- *
- * A `Parser` is responsible for converting source code into a `Program` instance. The `parser`
- * property on the `Vm` is set to the `Parser` instance that will be used by the `Vm` to parse your
- * program. By default, this will be an instance of `DefaultParser`. To use your own parser, do the
- * following:
- *
- * 1. Write a class that extends `Parser`.
- * 2. Implement the `parse()` method. Return an instance of a `Program` subclass.
- * 3. Set the `parser` property of the `Vm` to an instance of your new `Parser` subclass.
- *
- * ## `Program`
- *
- * The `Program` interface is for objects that are responsible for actually executing the
- * instruction at any given offset. `DefaultParser` returns a `DefaultProgram` instance when
- * parsing the source code. You may provide your own `Program` subclass and write a custom `Parser`
- * to return it.
- *
- * ## Default Parsing and Execution Behavior
- *
- * The `DefaultParser` expects the source to be a mutli-line string, where each line represents an
- * instruction. (Windows line endings are automatically converted to newlines.) The line starts
- * with an opcode token, which identifies the operation to perform. The instruction may also have
- * arguments; if they are present, they come after the opcode token, with a separator between them
- * (a space by default). There are also separaters between the arguments (also a space by default).
- *
- * Before parsing, opcodes must be registered by invoking `DefaultParser.opcode()`. This is how you
- * provide the behavior for each opcode. If an unknown opcode is encountered, an error will be
- * thrown.
- *
- * The `opcode()` method expects two arguments: the opcode to register, and a function implementing
- * that operation. The implementation function will receive to arguments when invoked: a reference
- * to the `Vm` instance, and an array of the arguments for the instruction. Each argument is either
- * an integer or a string naming a register. (An argument token will be considered an integer if it
- * matches the `RegExp` `/^[+-]?\d+$/`). If the parser encounters an unknown register name, it will
- * throw an `Error`. The `Vm.eval()` method will automatically coerce arguments to their actual
- * values for you.
- *
- * If an instruction modified the instruction pointer, the next step will execute the instruction
- * at that location. If the instruction pointer is still at the same location it was just before
- * the instruction was executed, the `Vm` will automatically increment it to point at the next
- * instruction.
- *
- * Execution terminates either when you invoke `terminate()`, or the instruction pointer moves
- * outside the list of instructions.
- *
- * ## Tracing
- *
- * You can cause debugging messages to be output by using the tracing feature. Tracing is off by
- * default; to activate tracing, invoke `setTrace()` to a `stream.Writable` where you want the
- * tracing messages written. To output a trace message, pass it to `trace()`.
- *
- * ## Breakpoints
- *
- * The `Vm` supports setting a breakpoint at any offset, which will cause execution to
- * automatically halt when the breakpoint is encountered while it is `run()`ning. Breakpoints are
- * not trigged when `step()`ping through the program. You can set and clear breakpoints using the
- * `setBreakpoint()`, `clearBreakpoint()`, and `clearAllBreakpoints()` methods. You may optionally
- * specify a condition for a breakpoint. The condition is a function that receives a reference to
- * the `Vm` instance. If a condition is provided for a breakpoint, execution will only halt there
- * if the conditional function returns a truthy value.
+ * A class for virtual machines. See [README.md](README.md) for details.
  */
 class Vm extends EventEmitter {
   #registers;
+  #lazyRegisters;
+  #ipIncrement;
+  #throwUnheardErrors;
   #ipName;
   #parser;
   #program;
   #input;
+  #output;
   #state;
+  #error;
   #trace;
-  #breakpoints;
+  #patches;
 
   /**
    * Creates a new `Vm`.
@@ -205,12 +28,78 @@ class Vm extends EventEmitter {
   constructor() {
     super();
     this.#registers = new Map();
+    this.#lazyRegisters = false;
+    this.#ipIncrement = 'unchanged';
+    this.#throwUnheardErrors = true;
     this.#registers.set(DEFAULT_IP_NAME, 0);
     this.#ipName = DEFAULT_IP_NAME;
     this.#parser = new Parser();
     this.#input = [];
+    this.#output = [];
     this.#state = 'ready';
-    this.#breakpoints = new Map();
+    this.#error = null;
+    this.#patches = new Map();
+  }
+
+  /**
+   * @returns {boolean} - whether registers will be automatically declared upon first use
+   */
+  get lazyRegisters() {
+    return this.#lazyRegisters;
+  }
+
+  /**
+   * @param {*} lazyRegisters - whether registers will be automatically declared upon first use
+   * (truthy) or if an error will be thrown (falsy)
+   */
+  set lazyRegisters(lazyRegisters) {
+    this.#lazyRegisters = !!lazyRegisters;
+  }
+
+  /**
+   * Tells the `Vm` whether it should auto-increment the instruction pointer after an operation
+   * completes. The possible values are:
+   *
+   * - `'never'`: Leave it alone. The instruction pointer only moves when explicitly changed by
+   *   setting the `ip` property (or updating the corresponding register).
+   * - `'unchanged'` (default): On completion of an operation, if the instruction pointer still
+   *   points to the same instruction as it did just before the operation, the `Vm` will
+   *   automatically increment it. Otherwise, it will be left alone.
+   * - `'always'`: The instruction pointer is always incremented after an operation completes,
+   *   even if the operation already moved it.
+   *
+   * @returns {string} - when the instruction pointer should be auto-incremented
+   */
+  get ipIncrement() {
+    return this.#ipIncrement;
+  }
+
+  /**
+   * @param {string} - the new ipIncrement value
+   */
+  set ipIncrement(ipIncrement) {
+    if (!IP_INCREMENT_VALUES.has(ipIncrement)) {
+      throw new Error(`Invalid ipIncrement value: ${ipIncrement}`);
+    }
+
+    this.#ipIncrement = ipIncrement;
+  }
+
+  /**
+   * @returns {boolean} - whether the `Vm` will throw any raised `Error` if there are no `error`
+   * event listeners
+   */
+  get throwUnheardErrors() {
+    return this.#throwUnheardErrors;
+  }
+
+  /**
+   * @param {*} - a truthy value causes the `Vm` to throw if an `Error` occurs and there are no
+   * registered `error` listeners; a falsy value cause it to simply terminate; in any case, the
+   * `Error` is still available via the read-only `error` property
+   */
+  set throwUnheardErrors(throwUnheardErrors) {
+    this.#throwUnheardErrors = !!throwUnheardErrors;
   }
 
   /**
@@ -266,6 +155,14 @@ class Vm extends EventEmitter {
   }
 
   /**
+   * @returns {Error|null} - the `Error` that caused the `Vm` to terminate; or `null` if the `Vm`
+   * has not terminated or terminated normally
+   */
+  get error() {
+    return this.#error;
+  }
+
+  /**
    * @returns {Parser} - the `Parser` instance
    */
   get parser() {
@@ -308,6 +205,16 @@ class Vm extends EventEmitter {
     }
 
     this.#registers.set(this.#ipName, offset);
+  }
+
+  /**
+   * Checks for the presence of the named register.
+   *
+   * @param {string} name - the register to check for
+   * @returns {boolean} - whether the register exists
+   */
+  hasRegister(name) {
+    return this.#registers.has(name);
   }
 
   /**
@@ -355,6 +262,16 @@ class Vm extends EventEmitter {
     }
 
     this.#registers.set(name, oldValue + value);
+  }
+
+  /**
+   * Returns a plain object containing the current state of the registers (including the
+   * instruction pointer).
+   *
+   * @returns {Object} - the registers state
+   */
+  exportRegisters() {
+    return Object.fromEntries(this.#registers);
   }
 
   /**
@@ -442,47 +359,37 @@ class Vm extends EventEmitter {
     }
 
     this.emit('output', value);
+    this.#output.push(value);
   }
 
   /**
-   * Sets a breakpoint at the named offset. If that offset is reached while the
-   * `Vm` is `run()`ning, a `breakpoint` event will be fired. Breakpoints do
-   * not fire while `step()`ping.
-   *
-   * @param {number} offset - the offset on which to set the breakpoint
-   * @param {Function} [condition] - a predicate that causes execution to stop at the breakpoint
-   * only if its condition is met
-   * @throws {TypeError} - if `offset` is not an integer
-   * @throws {Error} - if `offset` is out of range
+   * @returns {number} - the number of entries in the output queue
    */
-  setBreakpoint(offset, condition) {
-    if (this.isOutOfRange(offset)) {
-      throw new Error(`Offset out of range: ${offset}`);
-    }
-
-    this.#breakpoints.put(offset, condition ?? DEFAULT_BREAKPOINT_CONDITION);
+  get outputLength() {
+    return this.#output.length;
   }
 
   /**
-   * Removes any breakpoint that might exist at the given offset.
-   *
-   * @param {number} offset - the offset on which to set the breakpoint
-   * @throws {TypeError} - if `offset` is not an integer
-   * @throws {Error} - if `offset` is out of range
+   * @returns {Array<number>} - a copy of the output array (the output is not dequeued)
    */
-  clearBreakpoint(offset) {
-    if (this.isOutOfRange(offset)) {
-      throw new Error(`Offset out of range: ${offset}`);
-    }
-
-    this.#breakpoints.delete(offset);
+  cloneOutput() {
+    return [ ...this.#output ];
   }
 
   /**
-   * Removes all breakpoints.
+   * @returns {number} - the next dequeued output value
    */
-  clearAllBreakpoints() {
-    this.#breakpoints.clear();
+  dequeueOutput() {
+    return this.#output.shift();
+  }
+
+  /**
+   * @returns {Array<number>} - a copy of the output array (which is now dequeued)
+   */
+  dequeueAllOutput() {
+    const output = this.#output;
+    this.#output = [];
+    return output;
   }
 
   /**
@@ -501,7 +408,7 @@ class Vm extends EventEmitter {
   }
 
   /**
-   * Executes instructions until the `Vm` blocks on input, hits a breakpoint, or terminates.
+   * Executes instructions until the `Vm` blocks on input or terminates.
    */
   run() {
     this.#assertCanRun();
@@ -509,16 +416,19 @@ class Vm extends EventEmitter {
 
     do {
       this.#step();
-
-      if (this.#state === 'running') {
-        const breakpoint = this.#breakpoints.get(this.ip);
-
-        if (breakpoint?.(this)) {
-          this.#state = 'ready';
-          this.emit('breakpoint');
-        }
-      }
     } while(this.#state === 'running');
+  }
+
+  /**
+   * Halts execution of the `Vm` while it's running, without terminating it. Execution may be
+   * resumed by invoking `step()` or `run()`.
+   */
+  halt() {
+    if (this.#state !== 'running') {
+      throw new Error('Can\'t halt when not running');
+    }
+
+    this.#state = 'ready';
   }
 
   /**
@@ -528,10 +438,10 @@ class Vm extends EventEmitter {
    */
   terminate(error) {
     this.#state = 'terminated';
+    this.#error = error ?? null;
+    this.emit('terminated', error);
 
-    if (this.listeners('terminated').length) {
-      this.emit('terminated', error);
-    } else if (error) {
+    if (error && this.#throwUnheardErrors && !this.listenerCount('terminated')) {
       throw error;
     }
   }
@@ -557,14 +467,25 @@ class Vm extends EventEmitter {
   }
 
   /**
+   * Replaces an instruction with a function. When the instruction pointer reaches the given
+   * offset, the given function will be executed instead of the instruction.
+   *
+   * @param {number} offset - the offset to patch
+   * @param {Function} fn - the patch function
+   */
+  patch(offset, fn) {
+    this.#patches.set(offset, fn);
+  }
+
+  /**
    * Resets the `Vm`. This does the following:
    *
    * - Sets all registers (including the instruction pointer) to `0`.
-   * - Clears the input queue.
-   * - Unregisters all event listeners.
+   * - Clears the input and output queues.
    * - Sets the state to `'ready'`.
+   * - Clears the value of the `error` property.
    *
-   * The program remains in memory as-is.
+   * All other state remains as-is.
    */
   reset() {
     for (let key of this.#registers.keys()) {
@@ -572,8 +493,9 @@ class Vm extends EventEmitter {
     }
 
     this.#input = [];
-    this.removeAllListeners();
+    this.#output = [];
     this.#state = 'ready';
+    this.#error = null;
   }
 
   /**
@@ -582,14 +504,30 @@ class Vm extends EventEmitter {
    */
   #step() {
     this.emit('prestep');
-    let ip = this.ip;
+    const ip = this.ip;
+
+    if (ip < 0 || ip >= this.#program.length) {
+      this.terminate();
+      return;
+    }
 
     try {
-      this.#program.execute(this, ip);
+      // Has this instruction been patched?
+      const patch = this.#patches.get(ip);
 
-      if (this.#state === 'running' && this.ip === ip) {
-        // Instruction pointer hasn't moved; increment it.
-        this.ip = ip + 1;
+      if (patch) {
+        patch(this);
+      } else {
+        this.emit('preop');
+        this.#program.execute(this, ip);
+        this.emit('postop');
+      }
+
+      // Determine whether we should increment the instruction pointer.
+      if (this.#state === 'running' && this.#ipIncrement !== 'never') {
+        if (this.#ipIncrement === 'always' || this.ip === ip) {
+          this.ip++;
+        }
       }
 
       this.emit('poststep');
@@ -626,6 +564,11 @@ class Vm extends EventEmitter {
     const value = this.#registers.get(name);
 
     if (value === undefined) {
+      if (this.#lazyRegisters) {
+        this.#registers.set(name, 0);
+        return 0;
+      }
+
       throw new Error(`Register does not exist: ${name}`);
     }
 

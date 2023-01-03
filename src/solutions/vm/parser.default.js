@@ -124,7 +124,12 @@ class DefaultParser extends Parser {
   }
 
   /**
-   * Parses the given source code line.
+   * Parses the given source code line. The parsed instruction is an object with the following
+   * properties:
+   *
+   * - `opcode` (`string`): The opcode
+   * - `fn` (`Function`): The operation's implementation function
+   * - `args` (`Array<number|string>`): The instruction arguments
    *
    * @param {string} line - the source line
    * @returns {Object} - the parsed instruction
@@ -148,7 +153,7 @@ class DefaultParser extends Parser {
         args[i] = parseInt(arg, 10);
       }
     });
-    return { fn, args };
+    return { opcode, fn, args };
   }
 }
 

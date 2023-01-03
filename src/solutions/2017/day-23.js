@@ -1,4 +1,4 @@
-const duetVm = require('./duetvm');
+const DuetVm = require('./duetvm');
 const { split } = require('../util');
 const { isPrime } = require('../math2');
 
@@ -36,9 +36,18 @@ module.exports = input => [ part1, part2 ].map(fn => fn(input));
  * @returns {number} - the answer for part one
  */
 const part1 = input => {
-  const vm = duetVm(input);
+  const vm = new DuetVm();
+  vm.load(input);
+  let mulCount = 0;
+  vm.on('prestep', () => {
+    const instruction = vm.program.get(vm.ip);
+
+    if (instruction?.opcode === 'mul') {
+      mulCount++;
+    }
+  });
   vm.run();
-  return vm.getInstructionCount('mul');
+  return mulCount;
 };
 
 /**

@@ -1,5 +1,5 @@
 const { add } = require('../math2');
-const { parse, buildVm } = require('./elfcode');
+const ElfcodeVm = require('./elfcode');
 
 /**
  * # [Advent of Code 2018 Day 19](https://adventofcode.com/2018/day/19)
@@ -29,25 +29,21 @@ const { parse, buildVm } = require('./elfcode');
  * @returns {Array} - the puzzle answers
  */
 module.exports = input => {
-  const program = parse(input);
-  return [ part1, part2 ].map(fn => fn(program));
+  const vm = new ElfcodeVm();
+  vm.load(input);
+  return [ part1, part2 ].map(fn => fn(vm));
 };
 
 /**
  * Computes the answer to part one of the puzzle, which is the value in
  * register `0` when the program terminates.
  *
- * @param {Array} program - the program to execute
+ * @param {ElfcodeVm} vm - the Elfcode VM
  * @returns {number} - the answer to part one
  */
-const part1 = program => {
-  const vm = buildVm(program);
-
-  do {
-    vm.step();
-  } while (!vm.terminated);
-
-  return vm.regs[0];
+const part1 = vm => {
+  vm.run();
+  return vm.getRegister(0);
 };
 
 /**
@@ -55,18 +51,19 @@ const part1 = program => {
  * factors of the number that the program sets in register `2` when register
  * `0` is set to `1` before running the program.
  *
- * @param {Array} program - the program to execute
+ * @param {ElfcodeVm} vm - the Elfcode VM
  * @returns {number} - the answer to part two
  */
-const part2 = program => {
-  const vm = buildVm(program);
-  vm.regs[0] = 1;
-
-  do {
-    vm.step();
-  } while (vm.regs[0] === 1);
-
-  return add(computeFactors(vm.regs[2]));
+const part2 = vm => {
+  vm.reset();
+  vm.setRegister(0, 1);
+  vm.on('poststep', () => {
+    if (vm.getRegister(0) === 0) {
+      vm.terminate();
+    }
+  });
+  vm.run();
+  return add(computeFactors(vm.getRegister(2)));
 };
 
 /**

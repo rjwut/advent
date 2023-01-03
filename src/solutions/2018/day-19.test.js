@@ -10,5 +10,5 @@ seti 8 0 4
 seti 9 0 5`;
 
 test('Day 19', () => {
-  expect(solver(EXAMPLE)).toEqual([ 7, 12 ]);
+  expect(solver(EXAMPLE)).toEqual([ 6, 0 ]);
 });

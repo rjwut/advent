@@ -1,6 +1,6 @@
 const { split } = require('../util');
 
-const OPERATIONS = Object.values(require('./elfcode').operations);
+const { OPERATIONS } = require('./elfcode');
 const BEFORE_AND_AFTER_REGEXP = /^.+:\s+\[(\d+), (\d+), (\d+), (\d+)\]$/;
 
 /**
@@ -118,7 +118,7 @@ const part2 = (samples, program) => {
  *   "after": [ 3, 2, 2, 1 ]
  * }
  * ```
- * 
+ *
  * @param {Array} lines - the input lines
  * @returns {Object} - the scenario object
  */
@@ -138,8 +138,12 @@ const part2 = (samples, program) => {
  */
 const analyzeSample = sample => {
   sample.analysis = OPERATIONS.reduce((set, op) => {
-    const regs = [ ...sample.before ]
-    op.fn(regs, sample.instruction.slice(1));
+    const regs = [ ...sample.before ];
+    const vm = {
+      getRegister: number => regs[number],
+      setRegister: (number, value) => regs[number] = value,
+    };
+    op.fn(vm, sample.instruction.slice(1));
 
     if (regs.every((v, i) => v === sample.after[i])) {
       set.add(op.id);
@@ -211,10 +215,14 @@ const deduceOpcodes = samples => {
  */
 const run = (program, opcodeTable) => {
   const regs = [ 0, 0, 0, 0 ];
+  const vm = {
+    getRegister: number => regs[number],
+    setRegister: (number, value) => regs[number] = value,
+  };
 
   for (const instruction of program) {
     const operation = opcodeTable[instruction[0]];
-    operation.fn(regs, instruction.slice(1));
+    operation.fn(vm, instruction.slice(1));
   }
 
   return regs;

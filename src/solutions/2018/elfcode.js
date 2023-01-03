@@ -1,165 +1,162 @@
-const { split } = require('../util');
+const Vm = require('../vm');
 
 /**
  * The 16 operations supported by your wrist device.
  */
-const operations = {
-  addr: {
+const OPERATIONS = [
+  {
     id: 'addr',
-    fn: (regs, args) => {
-      regs[args[2]] = regs[args[0]] + regs[args[1]];
+    fn: (vm, args) => {
+      vm.setRegister(args[2], vm.getRegister(args[0]) + vm.getRegister(args[1]));
     },
   },
-  addi: {
+  {
     id: 'addi',
-    fn: (regs, args) => {
-      regs[args[2]] = regs[args[0]] + args[1];
+    fn: (vm, args) => {
+      vm.setRegister(args[2], vm.getRegister(args[0]) + args[1]);
     },
   },
-  mulr: {
+  {
     id: 'mulr',
-    fn: (regs, args) => {
-      regs[args[2]] = regs[args[0]] * regs[args[1]];
+    fn: (vm, args) => {
+      vm.setRegister(args[2], vm.getRegister(args[0]) * vm.getRegister(args[1]));
     },
   },
-  muli: {
+  {
     id: 'muli',
-    fn: (regs, args) => {
-      regs[args[2]] = regs[args[0]] * args[1];
+    fn: (vm, args) => {
+      vm.setRegister(args[2], vm.getRegister(args[0]) * args[1]);
     },
   },
-  banr: {
+  {
     id: 'banr',
-    fn: (regs, args) => {
-      regs[args[2]] = regs[args[0]] & regs[args[1]];
+    fn: (vm, args) => {
+      vm.setRegister(args[2], vm.getRegister(args[0]) & vm.getRegister(args[1]));
     },
   },
-  bani: {
+  {
     id: 'bani',
-    fn: (regs, args) => {
-      regs[args[2]] = regs[args[0]] & args[1];
+    fn: (vm, args) => {
+      vm.setRegister(args[2], vm.getRegister(args[0]) & args[1]);
     },
   },
-  borr: {
+  {
     id: 'borr',
-    fn: (regs, args) => {
-      regs[args[2]] = regs[args[0]] | regs[args[1]];
+    fn: (vm, args) => {
+      vm.setRegister(args[2], vm.getRegister(args[0]) | vm.getRegister(args[1]));
     },
   },
-  bori: {
+  {
     id: 'bori',
-    fn: (regs, args) => {
-      regs[args[2]] = regs[args[0]] | args[1];
+    fn: (vm, args) => {
+      vm.setRegister(args[2], vm.getRegister(args[0]) | args[1]);
     },
   },
-  setr: {
+  {
     id: 'setr',
-    fn: (regs, args) => {
-      regs[args[2]] = regs[args[0]];
+    fn: (vm, args) => {
+      vm.setRegister(args[2], vm.getRegister(args[0]));
     },
   },
-  seti: {
+  {
     id: 'seti',
-    fn: (regs, args) => {
-      regs[args[2]] = args[0];
+    fn: (vm, args) => {
+      vm.setRegister(args[2], args[0]);
     },
   },
-  gtir: {
+  {
     id: 'gtir',
-    fn: (regs, args) => {
-      regs[args[2]] = args[0] > regs[args[1]] ? 1 : 0;
+    fn: (vm, args) => {
+      vm.setRegister(args[2], args[0] > vm.getRegister(args[1]) ? 1 : 0);
     },
   },
-  gtri: {
+  {
     id: 'gtri',
-    fn: (regs, args) => {
-      regs[args[2]] = regs[args[0]] > args[1] ? 1 : 0;
+    fn: (vm, args) => {
+      vm.setRegister(args[2], vm.getRegister(args[0]) > args[1] ? 1 : 0);
     },
   },
-  gtrr: {
+  {
     id: 'gtrr',
-    fn: (regs, args) => {
-      regs[args[2]] = regs[args[0]] > regs[args[1]] ? 1 : 0;
+    fn: (vm, args) => {
+      vm.setRegister(args[2], vm.getRegister(args[0]) > vm.getRegister(args[1]) ? 1 : 0);
     },
   },
-  eqir: {
+  {
     id: 'eqir',
-    fn: (regs, args) => {
-      regs[args[2]] = args[0] === regs[args[1]] ? 1 : 0;
+    fn: (vm, args) => {
+      vm.setRegister(args[2], args[0] === vm.getRegister(args[1]) ? 1 : 0);
     },
   },
-  eqri: {
+  {
     id: 'eqri',
-    fn: (regs, args) => {
-      regs[args[2]] = regs[args[0]] === args[1] ? 1 : 0;
+    fn: (vm, args) => {
+      vm.setRegister(args[2], vm.getRegister(args[0]) === args[1] ? 1 : 0);
     },
   },
-  eqrr: {
+  {
     id: 'eqrr',
-    fn: (regs, args) => {
-      regs[args[2]] = regs[args[0]] === regs[args[1]] ? 1 : 0;
+    fn: (vm, args) => {
+      vm.setRegister(args[2], vm.getRegister(args[0]) === vm.getRegister(args[1]) ? 1 : 0);
     },
   },
-};
+];
+OPERATIONS.forEach(op => Object.freeze(op));
+Object.freeze(OPERATIONS);
 
 /**
- * Parses the input Elfcode program into an array of instruction objects. Each
- * object has the following properties:
- *
- * - `op` (string): The operation name
- * - `args` (Array): The arguments for the operation
- *
- * @param {string} input - the input Elfcode program
- * @returns {Array} - the parsed program
+ * The Elfcode VM that runs on your wrist device.
  */
-const parse = input => split(input).map(line => {
-  const parts = line.split(' ');
-  return {
-    op: parts[0],
-    args: parts.slice(1).map(Number),
-  };
-});
+class ElfcodeVm extends Vm {
+  #ipBind;
 
-/**
- * Builds the virtual machine to run the program. The VM has the following API:
- *
- * - `terminated` (boolean): Whether the program has terminated
- * - `regs` (Array): The registers
- * - `ipReg` (number): The index of the register that is bound to the instruction
- *   pointer
- * - `step()`: Executes the next instruction
- *
- * @param {Array} program - the program to execute
- * @returns {Object} - the VM API
- */
-const buildVm = program => {
-  const regs = [ 0, 0, 0, 0, 0, 0 ];
-  const ipReg = program[0].args[0];
-  program = program.slice(1);
-  const api = {
-    terminated: false,
-    regs,
-    ipReg,
-    step: () => {
-      if (regs[ipReg] < 0 || regs[ipReg] >= program.length) {
-        api.terminated = true;
+  /**
+   * Create a new `ElfcodeVm`.
+   */
+  constructor() {
+    super();
+    this.declareRegisters(0, 1, 2, 3, 4, 5);
+    OPERATIONS.forEach(({ id, fn }) => {
+      this.parser.opcode(id, fn);
+    });
+    this.#ipBind = null;
+    this.on('prestep', () => {
+      // Do not modify the IP bound register if we're already going to terminate
+      if (this.ip < 0 || this.ip >= this.program.length) {
         return;
       }
 
-      const { op, args } = program[regs[ipReg]];
-      const operation = operations[op];
-      operation.fn(regs, args);
-      regs[ipReg]++;
-    },
-  };
-  return api;
-};
+      if (this.#ipBind !== null) {
+        this.setRegister(this.#ipBind, this.ip);
+      }
+    });
+    this.on('postop', () => {
+      if (this.#ipBind !== null) {
+        this.ip = this.getRegister(this.#ipBind);
+      }
+    });
+    this.ipIncrement = 'always';
+  }
 
-/**
- * VM implementation for the wrist computer used days 16, 19, and 21.
- */
-module.exports = {
-  operations,
-  parse,
-  buildVm,
+  /**
+   * Loads the source code into the VM. Overridden in order to handle a preprocessing directive
+   * that might appear on the first line.
+   *
+   * @param {string} source - the program source
+   */
+  load(source) {
+    // First line might be a preprocessing directive to bind the IP to a register
+    if (source.startsWith('#ip ')) {
+      const newlineIndex = source.indexOf('\n');
+      this.#ipBind = parseInt(source.substring(4, newlineIndex), 10);
+      source = source.substring(newlineIndex + 1);
+    } else {
+      this.#ipBind = null;
+    }
+
+    super.load(source);
+  }
 }
+
+ElfcodeVm.OPERATIONS = OPERATIONS;
+module.exports = ElfcodeVm;

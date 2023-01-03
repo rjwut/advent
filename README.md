@@ -113,6 +113,12 @@ Run tests for a specific day:
 npm test {year}/day-{day}
 ```
 
+Run the 2016 bonus challenge:
+
+```bash
+npm run 2016-bonus
+```
+
 Run the interactive program from 2019 day 25:
 
 ```bash
@@ -226,6 +232,10 @@ This class is useful for quickly calculating the sum of all values in a rectangu
 
 Miscellaneous utility functions.
 
+### `vm`
+
+The `Vm` class simplifies creating and running a "virtual machine" of sorts to run the various types of assembly language programs found in _Advent of Code_ puzzles. This is a very complex module, so it has a separate `README.md` file that goes into the details.
+
 ## TODO
 
 Things I'd like to improve:
@@ -236,9 +246,11 @@ Things I'd like to improve:
   - 2021-05
 - 2019-25: Try combinations of inventory items using [Gray code](https://en.wikipedia.org/wiki/Gray_code)
 - Long runtimes:
+  - 2016-14: 173.555 s
   - 2016-11: 64.936 s
   - 2018-21: 57.588 s
   - 2018-22: 22.599 s
   - 2018-14: 15.992 s
   - 2019-18: 15.733 s
+  - 2016-25: 10.115 s
   - 2018-03: 7.816 s

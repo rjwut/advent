@@ -1,94 +1,68 @@
-const assembunny = require('./assembunny');
+const AssembunnyVm = require('./assembunny');
 
 /**
  * # [Advent of Code 2016 Day 25](https://adventofcode.com/2016/day/25)
  *
- * This puzzle requires three changes to our `assembunny` VM:
+ * This puzzle has new requirements of our VM:
  *
- * 1. We have to add the `out` operation. To support this, I created an
- *    `output` property on the context object, which is set to an empty array.
- *    Every time `out` runs, it pushes the value onto that array.
- * 2. Since we're running the same program over and over, it's convenient to
- *    have a `reset()` method to change all the registers to `0`, move the
- *    instruction pointer to the start of the program, and empty the output
- *    array.
- * 3. We need to be able to terminate the program if it goes into an infinite
- *    loop or if we see that an output value doesn't follow the `0`, `1`, `0`,
- *    `1`, ... pattern indicated by the puzzle. So I changed `run()` so it
- *    accepts an optional break condition function. This function gets invoked
- *    before each step, and if it returns a truthy value, execution halts
- *    immediately.
+ * 1. The VM needs to support an `out` operation to output a value. So we implement the `out`
+ *    operation and register it with the `Vm`. Fortunately, it has output support built in.
+ * 2. We need to be able to stop the program if an output occurs that doesn't match the `0`, `1`,
+ *    `0`, `1`,... pattern. We can do this by listening to the `output` event and calling
+ *    `vm.terminate()` when a bad output is detected.
+ * 3. We need to detect when the `Vm` has entered into an infinite loop. This can be defined as
+ *    a state where all registers (including the instruction pointer) have the same values as a
+ *    previous state. We can do this by listening to the `prestep` event and exporting the
+ *    registers, converting that to a string, and storing those strings in a `Set`. If we ever go
+ *    to store a new state string in the `Set` and find it's already there, we're in an infinite
+ *    loop. If we detect this condition, we terminate the `Vm`.
  *
- * The break condition function checks the following:
+ * With these two event listeners in place, the `Vm` will eventually terminate. The starting value
+ * of register `a` is valid when the following conditions are all true when the `Vm` terminates:
  *
- * 1. In the output, values at even indexes must be `0` and odd indexes must be
- *    `1`. Since an instruction can output at most one value, we only need to
- *    check the last one. If it doesn't match the above pattern, we terminate
- *    the program.
- * 2. To detect an infinite loop, we build a string that represents the current
- *    state of the VM. This string includes the instruction pointer location
- *    and the values of the registers. We store the strings in a `Set`. If ever
- *    we encounter the same string again, we know we've run into an infinite
- *    loop.
+ * - There has been at least two output values.
+ * - The number of output values is even.
+ * - There have been no invalid output values.
  *
- * To find the answer, we continue testing increasing values of `a` until all
- * of the following conditions are met:
- *
- * - The program terminates due to an infinite loop.
- * - The output array is not empty.
- * - The length of the output array is even.
- * - All even-indexed output values are `0` and all odd-indexed output values
- *   are `1`.
+ * We just test increasing start values for register `a` until we find the first one that meets
+ * all of the above conditions; that's our answer.
  *
  * @param {string} input - the puzzle input
  * @returns {Array} - the puzzle answers
  */
 module.exports = input => {
-  const vm = assembunny(input);
   const seenStates = new Set();
-  let infinite
+  const vm = new AssembunnyVm();
+  vm.load(input);
+  vm.on('output', value => {
+    // Detect whether we've had an invalid output
+    const expected = vm.outputLength % 2 === 0 ? 0 : 1
 
-  /**
-   * Returns `true` if the VM should halt, and `false` value otherwise.
-   *
-   * @returns {boolean} - whether the VM should halt
-   */
-  const breakCondition = () => {
-    const output = vm.ctx.output;
-
-    if (output.length) {
-      const i = output.length - 1;
-
-      if (output[i] !== i % 2) {
-        return true;
-      }
+    if (value !== expected) {
+      vm.terminate(new Error('Invalid output'));
     }
-
-    const state = vm.ctx.pointer + JSON.stringify(vm.ctx.regs);
+  });
+  vm.on('prestep', () => {
+    // Detect whether we've gone into an infinite loop
+    const state = JSON.stringify(vm.exportRegisters());
 
     if (seenStates.has(state)) {
-      infinite = true
-      return true;
+      vm.terminate();
+    } else {
+      seenStates.add(state);
     }
+  });
 
-    seenStates.add(state);
-    return false;
-  };
+  const keepSearching = () => vm.error || !vm.outputLength || vm.outputLength % 2 !== 0;
 
   let a = 0;
 
   do {
     vm.reset();
     seenStates.clear();
-    infinite = false
-    vm.ctx.regs.a = ++a;
-    vm.run(breakCondition);
-  } while (
-    !infinite ||
-    !vm.ctx.output.length ||
-    vm.ctx.output.length % 2 !== 0 ||
-    vm.ctx.output.some((value, i) => value !== i % 2)
-  );
+    vm.setRegister('a', ++a);
+    vm.run();
+  } while (keepSearching());
 
   return [ a, undefined ];
 };

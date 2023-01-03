@@ -1,8 +1,8 @@
 const solver = require('./day-11');
 
 const EXAMPLES = [
-  { input: 'abcdefgh', output: [ 'abcdffaa', undefined ] },
-  { input: 'ghijklmn', output: [ 'ghjaabcc', undefined ] },
+  { input: 'abcdefgh', output: [ 'abcdffaa', 'abcdffbb' ] },
+  { input: 'ghijklmn', output: [ 'ghjaabcc', 'ghjbbcdd' ] },
 ];
 
 EXAMPLES.forEach(({ input, output }, i) => {

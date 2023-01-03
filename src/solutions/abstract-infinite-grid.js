@@ -244,7 +244,7 @@ class AbstractInfiniteGrid {
       }
 
       const value = options.translate(this.#storage.get(coords.join(',')));
-      row.push(value === undefined ? '.' : String(value).charAt(0));
+      row.push(value);
     }, options);
 
     rows.push(row.join(''));

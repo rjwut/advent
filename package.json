@@ -14,6 +14,7 @@
     "generate": "node ./src/framework/generate",
     "start": "node ./src/framework",
     "session": "node ./src/framework/set-session",
+    "2016-bonus": "node ./src/solutions/2016/bonus-challenge",
     "2019-25": "node ./src/solutions/2019/day-25.interactive"
   },
   "devDependencies": {

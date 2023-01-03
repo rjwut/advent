@@ -45,7 +45,7 @@ const fonts = new Map(); // font cache
  * in which they were used:
  *
  * - `font6`: Glyphs are six lines high, most glyphs are four columns wide
- *   - 2016: day 8
+ *   - 2016: day 8 and bonus challenge
  *   - 2019: days 8 and 11
  *   - 2021: day 13
  *   - 2022: day 10

@@ -97,6 +97,44 @@ class CircularLinkedList {
   }
 
   /**
+   * Moves the named pointer until it points at an element with the given
+   * value, then reports whether the value was found. If the value is not
+   * found, the pointer will end up in the same position as it was when
+   * `seek()` was first called.
+   *
+   * @param {*} element - the element to seek
+   * @param {boolean} [reverse=false] - if `true`, seeks through the list
+   * backward instead of forward
+   * @param {number} [pointerId=0] - the ID of the pointer to move
+   * @returns {boolean} - whether the value was found
+   * @throws {Error} - if `pointerId` is not a valid pointer ID
+   */
+  seek(element, reverse = false, pointerId = 0) {
+    if (this.#size === 0) {
+      return false;
+    }
+
+    const dir = reverse ? 'prev' : 'next';
+    const start = this.#get(pointerId);
+    let node = start;
+    let found = false;
+
+    do {
+      if (node.value === element) {
+        found = true;
+      } else {
+        node = node[dir];
+      }
+    } while (!found && node !== start);
+
+    if (found) {
+      this.#pointers.set(pointerId, node);
+    }
+
+    return found;
+  }
+
+  /**
    * Inserts a new element after the element at the current pointer position.
    * After inserting an element, the pointer is moved to that new element. If
    * the list was empty, all pointers are moved to the new element.
@@ -220,8 +258,8 @@ class CircularLinkedList {
    * - If no elements were inserted or removed, no pointers will change.
    *
    * @param {number} remove - the number of elements to remove
-   * @param {Array} [insert=[]] - the elements to insert 
-   * @param {nunber=0} [pointerId=0] - the ID of the pointer to use 
+   * @param {Array} [insert=[]] - the elements to insert
+   * @param {nunber=0} [pointerId=0] - the ID of the pointer to use
    * @throws {TypeError} - if `remove` is not an integer or less than `0`
    * @throws {Error} - if `remove` is greater than the number of elements in
    * the list
@@ -372,7 +410,7 @@ class CircularLinkedList {
    * Returns the node at which the pointer with the given ID points. If there's
    * no such pointer, an `Error` is thrown.
    *
-   * @param {number} pointerId - the ID of the pointer 
+   * @param {number} pointerId - the ID of the pointer
    * @returns {Object|null} - the pointer's node, or `null` if the list is
    * empty
    */

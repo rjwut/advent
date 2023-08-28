@@ -54,7 +54,7 @@ const START_REPLACEMENT = [
  * locations. After overwriting the start location with the new data, I parse
  * the maze as before. The only other difference after that is that the state
  * now tracks four locations instead of just one, and we check available paths
- * for all for of them when pushing new states onto the stack.
+ * for all four of them when pushing new states onto the stack.
  *
  * One potential improvement would be to use a priority queue so that paths
  * which are closest to collecting all the keys are explored first. The faster
@@ -180,7 +180,7 @@ const part1 = input => {
         const newKeysLeft = entry.keysLeft.substring(0, keyIndex) +
           entry.keysLeft.substring(keyIndex + 1);
         const newDistance = entry.distance + path.distance;
-  
+
         if (!newKeysLeft.length && newDistance < bestDistance) {
           bestDistance = newDistance; // New best distance!
           return;

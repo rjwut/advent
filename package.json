@@ -6,8 +6,11 @@
   "author": "rjwut",
   "license": "MIT",
   "engines": {
-    "node": ">=16"
+    "node": "18"
   },
+  "homepage": "https://github.com/rjwut/advent",
+  "repository": "https://github.com/rjwut/advent",
+  "bugs": "https://github.com/rjwut/advent/issues",
   "scripts": {
     "lint": "eslint .",
     "test": "jest",
@@ -18,8 +21,8 @@
     "2019-25": "node ./src/solutions/2019/day-25.interactive"
   },
   "devDependencies": {
-    "eslint": "^8.22.0",
-    "eslint-plugin-jest": "^26.8.3",
-    "jest": "^28.1.3"
+    "eslint": "^8.38.0",
+    "eslint-plugin-jest": "^27.2.1",
+    "jest": "^29.5.0"
   }
 }

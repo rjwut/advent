@@ -19,7 +19,6 @@ class Vm extends EventEmitter {
   #output;
   #state;
   #error;
-  #trace;
   #patches;
 
   /**
@@ -444,26 +443,6 @@ class Vm extends EventEmitter {
     if (error && this.#throwUnheardErrors && !this.listenerCount('terminated')) {
       throw error;
     }
-  }
-
-  /**
-   * If set to a `stream.Writable` object, any messages passed to `trace()` will be written to that
-   * object. Set to `null` or `undefined` to turn tracing back off.
-   *
-   * @param {Writable} writable - where trace messages should be written
-   */
-  setTrace(writable) {
-    this.#trace = writable;
-  }
-
-  /**
-   * Writes a trace message for debugging purposes. By default, tracing is turned off; invoke
-   * `setTrace()` and pass in a `stream.Writable` to turn it on.
-   *
-   * @param {string} - the trace message to print
-   */
-  trace(message) {
-    this.#trace?.write(message + '\n')
   }
 
   /**

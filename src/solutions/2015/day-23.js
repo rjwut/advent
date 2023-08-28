@@ -37,7 +37,6 @@ const solve = input => {
   });
   vm.parser.argSeparator = ', ';
   vm.load(input);
-  vm.setTrace(process.stdout);
   return [ 0, 1 ].map(a => {
     vm.reset();
     vm.setRegister('a', a);

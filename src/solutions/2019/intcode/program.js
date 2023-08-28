@@ -34,11 +34,9 @@ class IntcodeProgram extends Program {
    * @param {number} offset - the offset of the instruction to execute
    */
   execute(vm, offset) {
-    vm.trace(`ADDRESS ${offset}`);
     const instruction = this.#memory[offset];
     const opcode = instruction % 100;
     vm.parameterMode = Math.floor(instruction / 100);
-    vm.trace(`  opcode=${opcode} modes=${vm.parameterMode}`);
     const fn = this.#parser.getOperation(opcode);
     const args = this.#memory.slice(offset + 1, offset + fn.argCount + 1);
     fn(vm, args);

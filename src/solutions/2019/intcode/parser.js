@@ -10,7 +10,6 @@ const OPERATIONS = [
       const v1 = vm.eval(args, 1);
       const sum = v0 + v1;
       const address = vm.eval(args, 2, true);
-      vm.trace(`  ADD ${v0} + ${v1} = ${sum} -> ${address}`);
       vm.program.write(address, sum);
     },
     argCount: 3,
@@ -23,7 +22,6 @@ const OPERATIONS = [
       const v1 = vm.eval(args, 1);
       const sum = v0 * v1;
       const address = vm.eval(args, 2, true);
-      vm.trace(`  MULTIPLY ${v0} * ${v1} = ${sum} -> ${address}`);
       vm.program.write(address, sum);
     },
     argCount: 3,
@@ -35,12 +33,10 @@ const OPERATIONS = [
       const input = vm.readInput();
 
       if (input === undefined) {
-        vm.trace('  BLOCKED ON INPUT');
         return;
       }
 
       const address = vm.eval(args, 0, true);
-      vm.trace(`  INPUT ${input} -> ${address}`);
       vm.program.write(address, input);
     },
     argCount: 1,
@@ -50,7 +46,6 @@ const OPERATIONS = [
     opcode: 4,
     fn: (vm, args) => {
       const output = vm.eval(args, 0);
-      vm.trace(`  OUTPUT ${output}`);
       vm.output(output);
     },
     argCount: 1,
@@ -61,7 +56,6 @@ const OPERATIONS = [
     fn: (vm, args) => {
       const value = vm.eval(args, 0);
       const address = vm.eval(args, 1);
-      vm.trace(`  JUMP-IF-TRUE ${value} -> ${address}`);
 
       if (value) {
         vm.ip = address;
@@ -75,7 +69,6 @@ const OPERATIONS = [
     fn: (vm, args) => {
       const value = vm.eval(args, 0);
       const address = vm.eval(args, 1);
-      vm.trace(`  JUMP-IF-FALSE ${value} -> ${address}`);
 
       if (!value) {
         vm.ip = address;
@@ -91,7 +84,6 @@ const OPERATIONS = [
       const v1 = vm.eval(args, 1);
       const result = v0 < v1 ? 1 : 0;
       const address = vm.eval(args, 2, true);
-      vm.trace(`  LESS-THAN ${v0} < ${v1}: ${result} -> ${address}`);
       vm.program.write(address, result);
     },
     argCount: 3,
@@ -104,7 +96,6 @@ const OPERATIONS = [
       const v1 = vm.eval(args, 1);
       const result = v0 === v1 ? 1 : 0;
       const address = vm.eval(args, 2, true);
-      vm.trace(`  EQUALS ${v0} < ${v1}: ${result} -> ${address}`);
       vm.program.write(address, result);
     },
     argCount: 3,
@@ -115,7 +106,6 @@ const OPERATIONS = [
     fn: (vm, args) => {
       const v0 = vm.eval(args, 0);
       vm.relativeBase += v0;
-      vm.trace(`  RELATIVE-BASE-OFFSET ${v0} -> ${vm.relativeBase}`);
     },
     argCount: 1,
   },

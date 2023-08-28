@@ -16,9 +16,6 @@ class IntcodeVm extends Vm {
     this.#parameterMode = 0;
     this.#relativeBase = 0;
     this.parser = new IntcodeParser();
-    this.on('terminated', error => {
-      this.trace(`TERMINATED ${error ? `ABNORMALLY:\n${error.stack}` : 'NORMALLY'}`);
-    });
   }
 
   /**

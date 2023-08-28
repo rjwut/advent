@@ -147,7 +147,3 @@ Before parsing, opcodes must be registered by invoking `DefaultParser.opcode()`.
 The `opcode()` method expects two arguments: the opcode to register, and a function implementing that operation. The implementation function will receive to arguments when invoked: a reference to the `Vm` instance, and an array of the arguments for the instruction. Each argument is either an integer or a string naming a register. (An argument token will be considered an integer if it matches the `RegExp` `/^[+-]?\d+$/`). If the parser encounters an unknown register name, it will throw an `Error`. The `Vm.eval()` method will automatically coerce arguments to their actual values for you.
 
 Execution terminates either when you invoke `terminate()`, or the instruction pointer moves outside the list of instructions. If you pass an `Error` into `terminate()`, the `Vm`'s `error` property will be set to that `Error`. If there are no `terminated` event listeners, the `Error` will also be thrown.
-
-## Tracing
-
-You can cause debugging messages to be output by using the tracing feature. Tracing is off by default; to activate tracing, invoke `setTrace()` to a `stream.Writable` where you want the tracing messages written. To output a trace message, pass it to `trace()`.

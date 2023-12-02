@@ -1,5 +1,8 @@
 const { split } = require('../util');
 
+/**
+ * Represents a single cube game.
+ */
 class Game {
   #id;
   #cubeSets;

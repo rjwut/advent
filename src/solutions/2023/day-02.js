@@ -1,70 +1,38 @@
 const { split } = require('../util');
 
-/**
- * Represents a single cube game.
- */
-class Game {
-  #id;
-  #cubeSets;
-
-  /**
-   * Parses the given game line into a `Game` object.
-   *
-   * @param {string} line - the game line
-   */
-  constructor(line) {
-    const [ name, rest ] = line.split(': ');
-    this.#id = parseInt(name.split(' ')[1], 10);
-    this.#cubeSets = rest.split('; ').map(description => new CubeSet(description));
-  }
-
-  /**
-   * @returns {number} - the game ID
-   */
-  get id() {
-    return this.#id;
-  }
-
-  /**
-   * Determines whether this Game can be played with the given bag of cubes.
-   *
-   * @param {CubeSet} bag - the bag of cubes
-   * @returns {boolean} - whether the game can be played
-   */
-  possible(bag) {
-    return this.#cubeSets.every(cubeSet => bag.gte(cubeSet));
-  }
-
-  /**
-   * Computes the smallest possible bag of cubes that makes this game possible.
-   *
-   * @returns {CubeSet} - the smallest possible bag of cubes
-   */
-  fit() {
-    return this.#cubeSets.reduce((max, cubeSet) => max.max(cubeSet), new CubeSet());
-  }
-}
-
-/**
- * Represents a collection of cubes.
- */
 class CubeSet extends Map {
+  #id;
+
   /**
-   * Creates a new `CubeSet`.
+   * Creates a new `CubeSet`. Can accept a string description of the cubes (e.g. `'3 blue, 4 red'`)
+   * or any argument accepted by `Map`'s constructor.
    *
-   * @param {*} [description] - either a string description of the cubes (e.g. `'3 blue, 4 red'`)
-   * or any argument accepted by `Map`'s constructor
+   * @param {*} arg - the constructor argument
    */
-  constructor(description) {
-    const fromString = typeof description === 'string';
-    super(fromString ? undefined : description);
+  constructor(arg) {
+    const fromString = typeof arg === 'string';
+    super(fromString ? undefined : arg);
 
     if (fromString) {
-      description.split(', ').forEach(cube => {
-        const [ count, color ] = cube.split(' ');
-        this.set(color, parseInt(count, 10));
+      const colonPos = arg.indexOf(': ');
+
+      if (colonPos !== -1) {
+        // We have an ID
+        const [ name, rest ] = arg.split(': ');
+        this.#id = parseInt(name.split(' ')[1], 10);
+        arg = rest;
+      }
+
+      arg.split(/[;,] /).map(description => {
+        let [ count, color ] = description.split(' ');
+        count = Math.max(parseInt(count, 10), this.get(color));
+        this.set(color, count);
       });
     }
+  }
+
+  get id() {
+    return this.#id;
   }
 
   /**
@@ -72,6 +40,16 @@ class CubeSet extends Map {
    */
   get power() {
     return [ ...this.values() ].reduce((power, count) => power * count, 1);
+  }
+
+  /**
+   * Overrides `Map.get()` to return `0` for colors that aren't present in this `CubeSet`.
+   *
+   * @param {string} color - the cube color
+   * @returns {number} - the number of cubes of the given color in the `CubeSet`
+   */
+  get(color) {
+    return super.get(color) ?? 0;
   }
 
   /**
@@ -84,20 +62,6 @@ class CubeSet extends Map {
   gte(other) {
     return [ ...other.entries() ].every(([ color, count ]) => this.get(color) >= count);
   }
-
-  /**
-   * Returns the smallest `CubeSet` that satisfies `this.gte(other)`.
-   *
-   * @param {CubeSet} other - the other `CubeSet`
-   * @returns {CubeSet} - the composite `CubeSet`
-   */
-  max(other) {
-    const colors = new Set([ ...this.keys(), ...other.keys() ]);
-    const entries = [ ...colors ].map(
-      color => [ color, Math.max(this.get(color) ?? 0, other.get(color) ?? 0) ]
-    );
-    return new CubeSet(entries);
-  }
 }
 
 const BAG = new CubeSet('12 red, 13 green, 14 blue');
@@ -106,33 +70,40 @@ const BAG = new CubeSet('12 red, 13 green, 14 blue');
  * # [Advent of Code 2023 Day 2](https://adventofcode.com/2023/day/2)
  *
  * I created a `CubeSet` class which extends `Map` and represents any collection of cubes of any
- * colors, and a `Game` class which represents a single game. See the documentation for those
- * methods for details.
+ * colors. I then overrode the constructor so that it could accept a string description of the set
+ * of cubes and `get()` so that it would return `0` for colors that aren't present in the set.
  *
- * Part 1:
- * 1. Filter games to those that are possible with the given bag of cubes.
- * 2. Sum the IDs of those games.
+ * A key realization that simplified the solution was to recognize that there was no need to keep
+ * track of the individual sets of cubes pulled out in each game. Instead, I could simply iterate
+ * each count and color combination in the description and ensure that the bag has at least that
+ * many cubes of that color in it. Thus, each game is automatically reduced to the smallest set of
+ * cubes that could satisfy it, which makes solving part two much easier. This means that `CubeSet`
+ * can be used to represent an entire game, so I added an `id` property to it and updated the
+ * constructor to extract it.
  *
- * Part 2:
- * 1. Compute the maximum number of cubes of each color needed for each game.
- * 2. Compute the power of the required bag for each game.
- * 3. Sum the powers.
+ * With that done, I just needed a couple of other things:
  *
- * - Constructor accepts a string description of the cubes, e.g. `'3 blue, 4 red'`
- * - `power` getter returns the product of all cube counts
- * - `gte(other)` method returns whether this `CubeSet` contains at least as many cubes of each
- *   color as the given `CubeSet`
- * - `max(other)` method computes the smallest `CubeSet` that satisfies `this.gte(other)`.
+ * - A `gte()` (greater than or equal to) method to determine whether one `CubeSet` contains at
+ *   least as many cubes of each color as another
+ * - A `power` getter to compute the product of the cube counts in a `CubeSet`
+ *
+ * Now I had everything needed to solve it:
+ *
+ * 1. Parse each line into a `CubeSet`.
+ * 2. Create a `BAG` `CubeSet` from the string `'12 red, 13 green, 14 blue'`.
+ * 3. Filter the games array to only those where `BAG.gte(game)`.
+ * 4. Sum the IDs of the remaining games. This is the answer to part one.
+ * 5. Sum the `power` property of all games. This is the answer to part two.
  *
  * @param {string} input - the puzzle input
  * @returns {Array} - the puzzle answers
  */
 module.exports = input => {
-  const games = split(input).map(line => new Game(line));
+  const games = split(input).map(line => new CubeSet(line));
   return [
-    games.filter(game => game.possible(BAG))
+    games.filter(game => BAG.gte(game))
       .reduce((sum, game) => sum + game.id, 0),
-    games.map(game => game.fit().power)
+    games.map(game => game.power)
       .reduce((sum, power) => sum + power, 0),
   ];
 };

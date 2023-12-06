@@ -4,7 +4,7 @@ const { add } = require('../math2');
 /**
  * # [Advent of Code 2023 Day 3](https://adventofcode.com/2023/day/3)
  *
- * The trick here is to ensure that we only ever consider each part number once, even wen it is
+ * The trick here is to ensure that we only ever consider each part number once, even when it is
  * attached to multiple symbols. We doh this by keeping a set of part number coordinates. As we
  * search the grid, if we find any symbols that have exactly two adjacent part numbers, that's a
  * gear; we'll keep the locations of their part numbers in a separate array so we can get the

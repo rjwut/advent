@@ -1,6 +1,6 @@
 const { split } = require('../util');
 
-// Objects describing each hand type, in order of strength
+// Predicates describing each hand type, in order of strength
 const HandType = [
   groups => groups.length === 1, // five of a kind
   groups => groups.includes(4),  // four of a kind

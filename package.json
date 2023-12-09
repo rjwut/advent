@@ -6,7 +6,7 @@
   "author": "rjwut",
   "license": "MIT",
   "engines": {
-    "node": "18"
+    "node": "20"
   },
   "homepage": "https://github.com/rjwut/advent",
   "repository": "https://github.com/rjwut/advent",

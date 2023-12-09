@@ -53,6 +53,7 @@ const countOverlappingPairs = pairs => add(pairs.map(
 
 /**
  * Represents a single section range.
+ * TODO: Replace with `Range` from `../range`
  */
 class Range {
   #min;

@@ -1,4 +1,4 @@
-const fs = require('fs').promises;
+const fs = require('fs/promises');
 const path = require('path');
 const https = require('https');
 
@@ -112,17 +112,16 @@ const get = url => new Promise((resolve, reject) => {
     },
   };
   const req = https.get(url, options, res => {
+    let error;
+
     if (res.statusCode !== 200) {
-      const error = new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`);
+      error = new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`);
       error.statusCode = res.statusCode;
       error.statusMessage = res.statusMessage;
 
       if (res.statusCode === 400) {
         error.statusMessage += ' (Has your session cookie expired? Run "npm run session {cookie}" to update it.)'
       }
-
-      reject(error);
-      return;
     }
 
     let data = '';
@@ -130,7 +129,12 @@ const get = url => new Promise((resolve, reject) => {
       data += chunk;
     });
     res.on('end', () => {
-      resolve(data);
+      if (error) {
+        error.body = data;
+        reject(error);
+      } else {
+        resolve(data);
+      }
     });
   });
   req.on('error', reject);

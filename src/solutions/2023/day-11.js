@@ -46,6 +46,8 @@ const EXPANSION = [ 1, 999_999 ];
 module.exports = input => {
   const grid = new SimpleGrid({ data: input });
   const galaxies = grid.findAll(value => value === '#');
+  galaxies.rows = grid.rows;
+  galaxies.cols = grid.cols;
   return EXPANSION.map(expansion => {
     const expanded = expand(galaxies, expansion);
     return computeDistances(expanded);
@@ -66,15 +68,9 @@ module.exports = input => {
  * @returns {Array<Array<number>>} - the galaxy coordinates after expansion
  */
 const expand = (galaxies, expansion) => {
-  // Find the maximum row and column
-  const { rMax, cMax } = galaxies.reduce(({ rMax, cMax }, { r, c }) => ({
-    rMax: Math.max(rMax, r),
-    cMax: Math.max(cMax, c),
-  }), { rMax: 0, cMax: 0 });
-
   // Find the empty rows and columns
-  let emptyRows = new Array(rMax + 1).fill(true);
-  let emptyCols = new Array(cMax + 1).fill(true);
+  let emptyRows = new Array(galaxies.rows).fill(true);
+  let emptyCols = new Array(galaxies.cols).fill(true);
   galaxies.forEach(({ r, c }) => {
     emptyRows[r] = false;
     emptyCols[c] = false;

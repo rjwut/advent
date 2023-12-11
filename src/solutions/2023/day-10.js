@@ -85,10 +85,10 @@ const Pipes = {
  * cells are in that row. Let's use the row marked with an arrow as an example, casting a ray from
  * west to east along that row.
  *
- * The ray casting algorithm by assuming that the ray starts outside the enclosed area. As we move
- * from west to east, every time it crosses completely over the pipeline, we move from being
- * outside the loop to inside it, or vice versa. In the example above, the first pipe shape we
- * encounter is `|`. Upon passing this cell, we are now inside the pipeline loop. The next two
+ * The ray casting algorithm works by first assuming that the ray starts outside the enclosed area.
+ * As we move from west to east, every time it crosses completely over the pipeline, we move from
+ * being outside the loop to inside it, or vice versa. In the example above, the first pipe shape
+ * we encounter is `|`. Upon passing this cell, we are now inside the pipeline loop. The next two
  * cells are not part of the pipeline, so they are counted as inside.
  *
  * The next cell contains `F`. This is part of the pipeline, but upon passing this cell, we haven't

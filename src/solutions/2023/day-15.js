@@ -48,9 +48,7 @@ const hash = string => {
   let value = 0;
 
   for (let i = 0; i < string.length; i++) {
-    value += string.charCodeAt(i);
-    value *= 17;
-    value %= 256;
+    value = ((value + string.charCodeAt(i)) * 17) % 256;
   }
 
   return value;

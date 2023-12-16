@@ -67,6 +67,10 @@ class SimpleGrid {
     return this.#cols;
   }
 
+  inBounds(r, c) {
+    return r >= 0 && r < this.#rows && c >= 0 && c < this.#cols;
+  }
+
   /**
    * Returns the value stored in the grid at the given location.
    *
@@ -571,6 +575,10 @@ class SimpleGrid {
    * @returns {number} - the index
    */
   #getIndex(r, c) {
+    if (!this.inBounds(r, c)) {
+      throw new Error(`(${r}, ${c}) is out of bounds`);
+    }
+
     return r * this.#cols + c;
   }
 }

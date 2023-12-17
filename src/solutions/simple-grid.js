@@ -79,7 +79,7 @@ class SimpleGrid {
    * @returns {*} - the value stored there
    */
   get(r, c) {
-    return this.#grid[this.#getIndex(r, c)];
+    return this.#grid[this.getIndex(r, c)];
   }
 
   /**
@@ -90,7 +90,7 @@ class SimpleGrid {
    * @param {*} value - the value to store
    */
   set(r, c, value) {
-    this.#grid[this.#getIndex(r, c)] = value;
+    this.#grid[this.getIndex(r, c)] = value;
   }
 
   /**
@@ -108,8 +108,8 @@ class SimpleGrid {
     const c1 = c0 + w;
 
     for (let r = r0; r < r1; r++) {
-      const i0 = this.#getIndex(r, c0);
-      const i1 = this.#getIndex(r, c1);
+      const i0 = this.getIndex(r, c0);
+      const i1 = this.getIndex(r, c1);
       this.#grid.fill(value, i0, i1);
     }
   }
@@ -189,7 +189,7 @@ class SimpleGrid {
 
     for (let r = r0; r < r1; r++) {
       for (let c = c0; c < c1; c++) {
-        const index = this.#getIndex(r, c);
+        const index = this.getIndex(r, c);
         callback(this.#grid[index], r, c, index);
       }
     }
@@ -222,7 +222,7 @@ class SimpleGrid {
           continue;
         }
 
-        const index = this.#getIndex(nr, nc);
+        const index = this.getIndex(nr, nc);
         callback(this.#grid[index], nr, nc, index);
       }
     }
@@ -270,7 +270,7 @@ class SimpleGrid {
 
     for (let r = r0; r < r1; r++) {
       for (let c = c0; c < c1; c++) {
-        grid[i++] = this.#grid[this.#getIndex(r, c)];
+        grid[i++] = this.#grid[this.getIndex(r, c)];
       }
     }
 
@@ -390,7 +390,7 @@ class SimpleGrid {
 
       for (let r = r0; r !== r1; r += dr) {
         for (let c = c0; c !== c1; c += dc) {
-          grid[i++] = this.#grid[this.#getIndex(r, c)];
+          grid[i++] = this.#grid[this.getIndex(r, c)];
         }
       }
     } else {
@@ -400,7 +400,7 @@ class SimpleGrid {
 
       for (let c = c0; c !== c1; c += dc) {
         for (let r = r0; r !== r1; r += dr) {
-          grid[i++] = this.#grid[this.#getIndex(r, c)];
+          grid[i++] = this.#grid[this.getIndex(r, c)];
         }
       }
     }
@@ -422,7 +422,7 @@ class SimpleGrid {
     }
 
     amount = Math.sign(amount) * (Math.abs(amount) % this.#cols);
-    const rowStart = this.#getIndex(r, 0);
+    const rowStart = this.getIndex(r, 0);
     const rowEnd = rowStart + this.#cols;
 
     if (amount > 0) {
@@ -451,7 +451,7 @@ class SimpleGrid {
     const column = new Array(this.#rows);
 
     for (let i = 0; i < this.#rows; i++) {
-      column[i] = this.#grid[this.#getIndex(i, c)];
+      column[i] = this.#grid[this.getIndex(i, c)];
     }
 
     if (amount > 0) {
@@ -463,8 +463,30 @@ class SimpleGrid {
     }
 
     for (let i = 0; i < this.#rows; i++) {
-      this.#grid[this.#getIndex(i, c)] = column[i];
+      this.#grid[this.getIndex(i, c)] = column[i];
     }
+  }
+
+  /**
+   * Returns the index of `#grid` corresponding to the given location.
+   * @param {number} r - the row
+   * @param {number} c - the column
+   * @returns {number} - the index
+   */
+  getIndex(r, c) {
+    if (!this.inBounds(r, c)) {
+      throw new Error(`(${r}, ${c}) is out of bounds`);
+    }
+
+    return r * this.#cols + c;
+  }
+
+  getPosition(index) {
+    if (index < 0 || index >= this.#grid.length) {
+      throw new Error(`Index ${index} is out of bounds`);
+    }
+
+    return { r: Math.floor(index / this.#cols), c: index % this.#cols };
   }
 
   /**
@@ -566,20 +588,6 @@ class SimpleGrid {
     this.#rows = options.rows;
     this.#cols = options.cols;
     this.#grid = new Array(this.#rows * this.#cols).fill(options.fill);
-  }
-
-  /**
-   * Returns the index of `#grid` corresponding to the given location.
-   * @param {number} r - the row
-   * @param {number} c - the column
-   * @returns {number} - the index
-   */
-  #getIndex(r, c) {
-    if (!this.inBounds(r, c)) {
-      throw new Error(`(${r}, ${c}) is out of bounds`);
-    }
-
-    return r * this.#cols + c;
   }
 }
 

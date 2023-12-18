@@ -6,9 +6,9 @@ This class lets you define and build a simple virtual machine that executes prog
 
 - `Vm`: This class represents the entire virtual machine and has methods for controlling it.
 - `Parser`: An interface for objects which can parse source code into instructions. Its `parse()` method is expected to accept the source code and return an instance of `Program`.
-- `DefaultParser`: The default implementation of the `Parser` interface. See the **Default Implementation** section below for details.
+- `DefaultParser`: The default implementation of the `Parser` interface.
 - `Program`: An interface which represents the code being executed. Can execute any single instruction given its offset.
-- `DefaultProgram`: The default implementation of `Program` which will be used when another is not provided. See the **Default Implementation** section below for details.
+- `DefaultProgram`: The default implementation of `Program` which will be used when another is not provided.
 
 Since JavaScript does not have the explicit concept of an interface, they are implemented as classes whose methods throw `Error`s. When you extend these interfaces, you must override the methods with your own implementations.
 
@@ -116,7 +116,7 @@ Alternatively, you may step through the program one instruction at a time by cal
 The differences between `halt()` and `terminate()` are:
 
 - The `halt()` method stops execution temporarily, meaning you can resume right where you left off by calling `step()` or `run()`. The `terminate()` method stops execution permanently, requiring you to `reset()` the VM's state and start over before you can run it again.
-- You may optionally pass an `Error` into `terminate()`
+- You may optionally pass an `Error` into `terminate()`.
 
 The `state` property is a string that describes the current execution state of the `Vm`:
 

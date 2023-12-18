@@ -155,6 +155,35 @@ const Math2 = {
     (product, value) => product * value,
     typeof terms[0] === 'bigint' ? 1n : 1
   ),
+
+  /**
+   * Computes the area of a simple (non-self-intersecting) polygon, optionally specifying the width
+   * of the edges, which can be included or excluded from the area.
+   *
+   * @param {Array<Array<number>>} vertices - an array of vertices, each of which is an array of
+   * two coordinate values
+   * @param {number} [width=0] - the width of the polygon's edges; a positive value includes the
+   * edges in the polygon's area, while a negative value excludes them
+   * @returns {number} - the polygon's area
+   * @see https://en.wikipedia.org/wiki/Shoelace_formula
+   */
+  polygonArea: (vertices, width = 0) => {
+    let perimeter = 0;
+    let area = 0;
+
+    for (let i = 0; i < vertices.length; i++) {
+      const n0 = i;
+      const n1 = (i + 1) % vertices.length;
+      const x0 = vertices[n0][0];
+      const y0 = vertices[n0][1];
+      const x1 = vertices[n1][0];
+      const y1 = vertices[n1][1];
+      perimeter += Math.abs(x0 - x1) + Math.abs(y0 - y1);
+      area += x0 * y1 - x1 * y0;
+    }
+
+    return Math.abs(area * 0.5) + width * (perimeter / 2 + 1);
+  },
 };
 
 module.exports = Math2;

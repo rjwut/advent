@@ -60,7 +60,7 @@ There are several other methods for working with registers:
 
 ## `Parser`
 
-A `Parser` is responsible for converting source code into a `Program` instance, the object responsible for actually executing the instruction at any given offset. Invoking `load()` on the `Vm` instance will trigger the `Parser`.
+A `Parser` is responsible for converting source code into a `Program` instance, the object responsible for actually executing the instruction at any given offset. Invoking `load()` on the `Vm` instance will trigger the `Parser`, and set the `Vm`'s `program` property to the generated `Program` instance.
 
 ### `DefaultParser`
 

@@ -48,7 +48,11 @@ module.exports = input => {
 
     do {
       value = value * 10 + Number(cell);
-      c++;
+
+      if (!grid.inBounds(r, ++c)) {
+        break;
+      }
+
       cell = grid.get(r, c);
     } while (isDigit(cell));
 

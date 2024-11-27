@@ -1,7 +1,7 @@
 const fs = require('fs/promises');
 const path = require('path');
 const readline = require('readline');
-const intcode = require('./intcode-ascii');
+const intcode = require('./intcode/ascii');
 
 const PROMPT = '\nCommand?\n';
 

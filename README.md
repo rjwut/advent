@@ -125,6 +125,12 @@ Run the interactive program from 2019 day 25:
 npm run 2019-25
 ```
 
+Run the computation for the input values for the quadratic fit for 2023 day 21:
+
+```bash
+npm run 2023-21
+```
+
 ## Project Structure
 
 - **Solution code**: These files are code that actually solves the puzzles. They are found under `src/solutions`:
@@ -203,6 +209,10 @@ This module contains the `Bounds` class, which is used to represent the bounds o
 ### `circular-linked-list`
 
 The `CircularLinkedList` class is a doubly-linked list where the first and last elements are linked together to form a ring. You can rotate the pointer around the list, inspect the element at the pointer, remove that element, or insert elements before or after that element. The advantage this class has over arrays is that insertions and removals are much less expensive because there is no need to shift elements, and you don't need to write any code to deal with the fact that the list wraps around.
+
+### `dijkstra`
+
+A generic implementation of [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm).
 
 ### `grid-to-graph`
 

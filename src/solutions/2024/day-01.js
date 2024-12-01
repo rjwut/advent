@@ -5,12 +5,12 @@ const INTEGERS_REGEXP = /\d+/g;
  *
  * I used a regular expression to extract all integers from the input string, coerced them to
  * numbers, and split them into two lists. I sorted each list, since that was important for part
- * one and wouldn't negatively affect part two. For part one, I just sorted each list, then
- * iterated them and summed the absolute values of the differences of the values at each index. For
- * part two, I used a `Map` to count the occurrences of each number in the right list, then
- * iterated the left list and summed the product of each number and its count in the right list.
- * The only small issue I ran into and quickly resolved was forgetting to use `?? 0` to default to
- * `0` when the left list contained a number that wasn't present in the right list.
+ * one and wouldn't negatively affect part two. For part one, I just iterated them and summed the
+ * absolute values of the differences of the values at each index. For part two, I used a `Map` to
+ * count the occurrences of each number in the right list, then iterated the left list and summed
+ * the product of each number and its count in the right list. The only small issue I ran into and
+ * quickly resolved was forgetting to use `?? 0` to default to `0` when the left list contained a
+ * number that wasn't present in the right list.
  *
  * @param {string} input - the puzzle input
  * @returns {Array} - the puzzle answers

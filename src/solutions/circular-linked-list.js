@@ -286,7 +286,7 @@ class CircularLinkedList {
     let after;
 
     for (let i = 0; i < remove; i++) {
-      removedPointers = [ ...removedPointers, ...this.#findPointersAt(current) ];
+      removedPointers.push(...this.#findPointersAt(current));
       removed.push(current.value);
       current = current.next;
     }

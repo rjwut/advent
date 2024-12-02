@@ -24,8 +24,7 @@ module.exports = input => {
     } else {
       // Not safe for part 1; can we remove an element to make it safe?
       for (let i = 0; i < report.length; i++) {
-        const newReport = [ ...report ];
-        newReport.splice(i, 1)
+        const newReport = report.toSpliced(i, 1)
 
         if (isSafe(newReport)) {
           // Safe for part 2 only.

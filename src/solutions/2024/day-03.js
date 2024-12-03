@@ -21,17 +21,15 @@ module.exports = input => {
   let enabled = true;
   const instructions = match(input, INSTRUCTION_REGEXP, { a: Number, b: Number });
   instructions.forEach(({ op, a, b }) => {
-    if (op === 'do') {
-      enabled = true;
-    } else if (op === 'don\'t') {
-      enabled = false;
-    } else if (op === 'mul') {
+    if (op === 'mul') {
       const product = a * b;
       answers[0] += product;
 
       if (enabled) {
         answers[1] += product;
       }
+    } else {
+      enabled = op === 'do';
     }
   });
   return answers;

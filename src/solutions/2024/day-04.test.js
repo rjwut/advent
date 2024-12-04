@@ -1,0 +1,16 @@
+const solver = require('./day-04');
+
+const EXAMPLE = `MMMSXXMASM
+MSAMXMSMSA
+AMXSXMAAMM
+MSAMASMSMX
+XMASAMXAMM
+XXAMMXXAMA
+SMSMSASXSS
+SAXAMASAAA
+MAMMMXMMMM
+MXMXAXMASX`;
+
+test('Day 4', () => {
+  expect(solver(EXAMPLE)).toEqual([ 18, 9 ]);
+});

@@ -10,11 +10,11 @@ This class lets you define and build a simple virtual machine that executes prog
 - `Program`: An interface which represents the code being executed. Can execute any single instruction given its offset.
 - `DefaultProgram`: The default implementation of `Program` which will be used when another is not provided.
 
-Since JavaScript does not have the explicit concept of an interface, they are implemented as classes whose methods throw `Error`s. When you extend these interfaces, you must override the methods with your own implementations.
+Since JavaScript does not have the explicit concept of an interface, `Parser` and `Program` are implemented as classes whose methods throw `Error`s. When you extend these interfaces, you must override the methods with your own implementations.
 
 ## Basic Usage
 
-The basic steps for using a `Vm` with its default parser is as follows:
+The basic steps for using a `Vm` with its default parser are as follows:
 
 1. Instantiate the `Vm`.
 2. Declare any needed registers.
@@ -72,7 +72,7 @@ The `opcode()` method expects two arguments: the opcode string to register, and 
 
 ### Custom `Parser` Implementations
 
-When you invok `load()` on the `Vm`, it uses the `Parser` instance stored on the `Vm`'s `parser` property. By default, this is an instance of `DefaultParser`. To use your own `Parser` implementation, do the following:
+When you invoke `load()` on the `Vm`, it uses the `Parser` instance stored on the `Vm`'s `parser` property. By default, this is an instance of `DefaultParser`. To use your own `Parser` implementation, do the following:
 
 1. Write a class that extends `Parser`.
 2. Implement the `parse()` method. Return an instance of a `Program` subclass.

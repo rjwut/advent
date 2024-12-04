@@ -26,14 +26,24 @@ const VALID_CORNERS = new Set(['MMSS', 'SMMS', 'SSMM', 'MSSM']);
  * desired letter, I increment the counter. The final count is the answer to part one.
  *
  * I was prepared to follow a similar approach for part two, but I realized that there is a faster
- * and easier way:
+ * and easier way. There are only four valid `X-MAS` patterns:
+ *
+ * ```txt
+ * M.M  S.M  S.S  M.S
+ * .A.  .A.  .A.  .A.
+ * S.S  S.M  M.M  M.S
+ * ```
+ *
+ * So instead of trying to find diagonal `MAS` instances, then checking for another `MAS` that
+ * crosses it, I instead can just search for `A`s that are surrounded by one of the four valid
+ * patterns described above. Here's how I did it:
  *
  * 1. Iterate all cells in the grid that are not on the edge.
  * 2. Skip cells that do not contain the letter `A`.
  * 3. Grab the contents of the four cells diagonally adjacent to the current cell and concatenate
  *    them together in clockwise order.
- * 4. If this is an `X-MAS`, the concatenated string will be `MMSS`, `SMMS`, `SSMM`, or `MSSM`. If
- *    so, increment the counter.
+ * 4. If the concatenated string is `MMSS`, `SMMS`, `SSMM`, or `MSSM`, this is a valid `X-MAS`
+ *    pattern, so increment the counter.
  * 5. The final count is the answer to part two.
  *
  * @param {string} input - the puzzle input

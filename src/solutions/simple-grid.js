@@ -1,9 +1,10 @@
 const INTERNAL = Symbol('INTERNAL');
 
 /**
- * This class has better performance than `InfiniteGrid`, but is only suited
- * for two-dimensional grids of fixed size. Choose `InfiniteGrid` when its
- * specific advantages are more suited for the use case.
+ * This class allows you to work with two-dimensional grids of a fixed size. It offers better
+ * performance and more features than `InfiniteGrid`, but is not suited for more than two
+ * dimensions, coordinate spaces that don't start with `0,0`, or sparse data. Use `InfiniteGrid` for
+ * those cases.
  */
 class SimpleGrid {
   #grid
@@ -59,14 +60,27 @@ class SimpleGrid {
     }
   }
 
+  /**
+   * @returns {number} - how many rows the grid has
+   */
   get rows() {
     return this.#rows;
   }
 
+  /**
+   * @returns {number} - how many columns the grid has
+   */
   get cols() {
     return this.#cols;
   }
 
+  /**
+   * Detects whether the given coordinates are within the grid's bounds.
+   *
+   * @param {number} r - the row coordinate
+   * @param {number} c - the column coordinate
+   * @returns {boolean} - `true` if the coordinates are in bounds, `false` otherwise
+   */
   inBounds(r, c) {
     return r >= 0 && r < this.#rows && c >= 0 && c < this.#cols;
   }
@@ -115,7 +129,7 @@ class SimpleGrid {
   }
 
   /**
-   * Locates the first instance of the given value in the grid (rows first, then columns).
+   * Locates the first instance (in row-major order) of the given value in the grid.
    *
    * @param {*} value - the value to find
    * @returns {Object|null} - an object with `r` and `c` properties, if found; `null` otherwise
@@ -129,9 +143,10 @@ class SimpleGrid {
    * Returns all values in the grid that fulfill the given predicate. The predicate receives three
    * arguments:
    *
-   * - `value` (`any`): The found value
-   * - `r` (`number`): The row index
-   * - `c` (`number`): The column index
+   * - `value: any`: The found value
+   * - `r: number`: The row index
+   * - `c: number`: The column index
+   * - `i: number`: The element index
    *
    * Each element in the returned array is an object with properties matching the predicate
    * arguments.
@@ -141,9 +156,9 @@ class SimpleGrid {
    */
   findAll(predicate) {
     const results = [];
-    this.forEach((value, r, c) => {
-      if (predicate(value, r, c)) {
-        results.push({ value, r, c });
+    this.forEach((value, r, c, i) => {
+      if (predicate(value, r, c, i)) {
+        results.push({ value, r, c, i });
       }
     });
     return results;
@@ -159,8 +174,8 @@ class SimpleGrid {
   }
 
   /**
-   * Iterates all values in the grid, in row-major order, invoking `callback`
-   * for each, passing in the value, row, column, and index.
+   * Iterates all values in the grid, in row-major order, invoking `callback` for each, passing in
+   * the value, row, column, and index.
    *
    * @param {Function} callback - the callback function
    */
@@ -173,9 +188,8 @@ class SimpleGrid {
   }
 
   /**
-   * Iterates all values in a rectangular region of the grid, in row-major
-   * order, invoking `callback` for each, passing in the value, row, column,
-   * and index.
+   * Iterates all values in a rectangular region of the grid, in row-major order, invoking
+   * `callback` for each, passing in the value, row, column, and index.
    *
    * @param {number} r0 - the row of the top-left corner
    * @param {number} c0 - the column of the top-left corner
@@ -196,19 +210,16 @@ class SimpleGrid {
   }
 
   /**
-   * Iterates all values in a rectangular region of the grid, where all values
-   * are at least `size` cells away from the indicated location. The selected
-   * region is iterated in row-major order, invoking `callback` for each,
-   * passing in the value, row, column, and index. Note that the specified
-   * location can be optionally included or omitted.
+   * Iterates all values in a rectangular region of the grid, where all values are at least `size`
+   * cells away from the indicated location. The selected region is iterated in row-major order,
+   * invoking `callback` for each, passing in the value, row, column, and index. Note that the
+   * specified location can be optionally included or omitted.
    *
    * @param {number} r - the location row
    * @param {number} c - the location column
    * @param {Function} callback - the callback function
-   * @param {number} [size=1] - the maximum distance from the location to
-   * include
-   * @param {boolean=false} includeSelf - whether to include the specified
-   * location in the iteration
+   * @param {number} [size=1] - the maximum distance from the location to include
+   * @param {boolean=false} includeSelf - whether to include the specified location in the iteration
    */
   forEachNear(r, c, callback, size = 1, includeSelf = false) {
     const r0 = Math.max(r - size, 0);
@@ -229,13 +240,18 @@ class SimpleGrid {
   }
 
   /**
-   * Returns the number of elements which match the given predicate.
+   * Returns the number of elements which match the given predicate. The predicate receives four
+   * arguments for each cell being iterated: the value at that location, the row index, the column
+   * index, and the element index.
    *
    * @param {Function} predicate - the predicate to use to test elements
    * @returns {number} - the number of elements which match the predicate
    */
   count(predicate) {
-    return this.#grid.filter(predicate).length;
+    return this.reduce(
+      (acc, value, r, c, i) => acc + (predicate(value, r, c, i) ? 1 : 0),
+      0
+    );
   }
 
   /**
@@ -253,8 +269,8 @@ class SimpleGrid {
   }
 
   /**
-   * Returns a copy of a rectangular region of this `SimpleGrid` instance as a
-   * new `SimpleGrid` instance.
+   * Returns a copy of a rectangular region of this `SimpleGrid` instance as a new `SimpleGrid`
+   * instance.
    *
    * @param {number} r0 - the row of the top-left corner
    * @param {number} c0 - the column of the top-left corner
@@ -292,10 +308,26 @@ class SimpleGrid {
   }
 
   /**
-   * Returns a new `SimpleGrid` instance with the same dimensions as this one,
-   * with each cell populated by `callback`'s return value, passing in the
-   * value, row, column, and index of the corresponding cell from this
-   * `SimpleGrid`.
+   * Creates a new `SimpleGrid` which is a copy of this `SimpleGrid` with a border around it. The
+   * original `SimpleGrid` remains unchanged. Note that in the new `SimpleGrid`, the coordinates for
+   * the original `SimpleGrid`'s contents will be shifted by `size` in both directions.
+   *
+   * @param {number} size - the width of the border in number of cells
+   * @param {*} [fill] - the value to copy into the border cells; defaults to `undefined`
+   * @returns {SimpleGrid} - the new, expanded grid
+   */
+  expand(size, fill) {
+    const rows = this.rows + 2 * size;
+    const cols = this.cols + 2 * size;
+    const grid = new SimpleGrid({ rows, cols, fill });
+    grid.paste(this, size, size);
+    return grid;
+  }
+
+  /**
+   * Returns a new `SimpleGrid` instance with the same dimensions as this one, with each cell
+   * populated by `callback`'s return value, passing in the value, row, column, and index of the
+   * corresponding cell from this `SimpleGrid`.
    *
    * @param {Function} callback - the callback function
    * @returns {SimpleGrid} - the new grid
@@ -309,9 +341,8 @@ class SimpleGrid {
   }
 
   /**
-   * Computes a single value from the values in this `SimpleGrid`. The cells
-   * are iterated in row-major order, invoking `callback` for each, passing in
-   * the following arguments:
+   * Computes a single value from the values in this `SimpleGrid`. The cells are iterated in
+   * row-major order, invoking `callback` for each, passing in the following arguments:
    *
    * 1. The current accumulator value
    * 2. The value of the current element
@@ -319,10 +350,9 @@ class SimpleGrid {
    * 4. The current column index
    * 5. The current element index
    *
-   * The return value of `callback` is the accumulator value which is passed
-   * into the next invocation. The `initialValue` argument is the accumulator
-   * value for the first invocation of `callback`. When all cells are iterated,
-   * the accumulator value is returned.
+   * The return value of `callback` is the accumulator value which is passed into the next
+   * invocation. The `initialValue` argument is the accumulator value for the first invocation of
+   * `callback`. When all cells are iterated, the accumulator value is returned.
    *
    * @param {Function} callback - the callback function
    * @param {*} initialValue - the first accumulator value
@@ -337,8 +367,7 @@ class SimpleGrid {
   }
 
   /**
-   * Returns a new `SimpleGrid` which represents a vertical flip of this
-   * `SimpleGrid`.
+   * Returns a new `SimpleGrid` which represents a vertical flip of this `SimpleGrid`.
    *
    * @returns {SimpleGrid} - the new flipped grid
    */
@@ -351,8 +380,7 @@ class SimpleGrid {
   }
 
   /**
-   * Returns a new `SimpleGrid` which represents a horizontal flip of this
-   * `SimpleGrid`.
+   * Returns a new `SimpleGrid` which represents a horizontal flip of this `SimpleGrid`.
    *
    * @returns {SimpleGrid} - the new flipped grid
    */
@@ -365,9 +393,8 @@ class SimpleGrid {
   }
 
   /**
-   * Returns a new `SimpleGrid` instance that represents a rotation of this
-   * `SimpleGrid` by the given number of 90-degree clockwise turns (or, if
-   * `turns` is negative, counterclockwise turns).
+   * Returns a new `SimpleGrid` instance that represents a rotation of this `SimpleGrid` by the
+   * given number of 90-degree clockwise turns (or, if `turns` is negative, counterclockwise turns).
    *
    * @param {number} turns - the number of 90-degree turns
    * @returns {SimpleGrid} - the rotated grid
@@ -468,10 +495,11 @@ class SimpleGrid {
   }
 
   /**
-   * Returns the index of `#grid` corresponding to the given location.
+   * Returns the element index corresponding to the given location.
    * @param {number} r - the row
    * @param {number} c - the column
    * @returns {number} - the index
+   * @throws {Error} - if `r` or `c` are out of bounds
    */
   getIndex(r, c) {
     if (!this.inBounds(r, c)) {
@@ -481,6 +509,13 @@ class SimpleGrid {
     return r * this.#cols + c;
   }
 
+  /**
+   * Returns the row and column corresponding to the given element index.
+   *
+   * @param {number} index - the element index
+   * @returns {Object} - an object with `r` and `c` properties giving the coordinates
+   * @throws {Error} - if `index` is out of bounds
+   */
   getPosition(index) {
     if (index < 0 || index >= this.#grid.length) {
       throw new Error(`Index ${index} is out of bounds`);
@@ -491,8 +526,8 @@ class SimpleGrid {
 
   /**
    * Returns a string representation of this `SimpleGrid`. It is assumed that each cell's contents
-   * are the same length when printed out; the `coerce` argument can be used to convert values
-   * before rendering them.
+   * are the same length when printed out. The optional `coerce` argument can be used to convert
+   * values before rendering them.
    *
    * @param {Function} [coerce] - a function to convert values before output
    * @returns {string} - the string render
@@ -514,8 +549,8 @@ class SimpleGrid {
   }
 
   /**
-   * Used by `SimpleGrid` methods to directly populate the private variables of
-   * the a new `SimpleGrid` via the constructor.
+   * Used by `SimpleGrid` methods to directly populate the private variables of the a new
+   * `SimpleGrid` via the constructor.
    *
    * @param {Object} options - the variables
    */
@@ -527,6 +562,7 @@ class SimpleGrid {
 
   /**
    * Invoked by the constructor when the `data` option is specified.
+   *
    * @param {Object} options - the options object
    */
   #populateGrid(options) {
@@ -587,7 +623,11 @@ class SimpleGrid {
   #buildEmptyGrid(options) {
     this.#rows = options.rows;
     this.#cols = options.cols;
-    this.#grid = new Array(this.#rows * this.#cols).fill(options.fill);
+    this.#grid = new Array(this.#rows * this.#cols);
+
+    if (options.fill !== 'undefined') {
+      this.#grid.fill(options.fill);
+    }
   }
 }
 

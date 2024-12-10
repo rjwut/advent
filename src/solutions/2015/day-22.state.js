@@ -50,19 +50,20 @@ const SPELL_LOOKUP = Object.fromEntries(
  * Returns an array containing the possible next states from the given current
  * state. A state object has the following schema:
  *
- * - `me` (`Object`)
- *   - `hp` (`number`)
- *   - `armor` (`number`)
- *   - `mana` (`number`)
- *   - `spent` (`number`)
- * - `boss` (`Object`)
- *   - `hp` (`number`)
- *   - `damage` (`number`)
- * - `effects` (`Array<Object>`): Currently active effects:
- *   - `spell` (`string`)
- *   - `turnsLeft` (`number`)
- * - `hard` (`boolean`): Whether we're on hard difficulty
- * - `myTurn` (`boolean`): Whether it's the player's turn
+ * - `me: Object`
+ *   - `hp: number`
+ *   - `armor: number`
+ *   - `mana: number`
+ *   - `spent: number`
+ * - `boss: Object`
+ *   - `hp: number`
+ *   - `damage: number`
+ * - `effects: Object[]`: Currently active effects:
+ *   - `spell: string`
+ *   - `turnsLeft: number`
+ * - `hard: boolean`: Whether we're on hard difficulty
+ * - `myTurn: boolean`: Whether it's the player's turn
+ * - `spells: string[]`: The spells cast by the player so far
  *
  * @param {Object} state - the current game state
  * @returns {Array<Object>} - the possible next states
@@ -106,14 +107,14 @@ module.exports = state => {
       clonedState.me.mana -= spell.cost;
       clonedState.me.spent += spell.cost;
       spell.onCast?.(clonedState);
-  
+
       if (spell.duration) {
         clonedState.effects.push({
           spell: spell.name,
           turnsLeft: spell.duration,
         });
       }
-  
+
       return clonedState;
     });
   };

@@ -3,7 +3,10 @@
 You could solve part one with an iterative approach, but part two makes that infeasible. This is where the math comes in. The solution for each machine is a system of two linear equations:
 
 ```math
-Ax_a + Bx_b = x_p\\
+Ax_a + Bx_b = x_p
+```
+
+```math
 Ay_a + By_b = y_p
 ```
 

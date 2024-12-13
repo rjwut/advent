@@ -140,7 +140,7 @@ class SimpleGrid {
   }
 
   /**
-   * Returns all values in the grid that fulfill the given predicate. The predicate receives three
+   * Returns all values in the grid that fulfill the given predicate. The predicate receives four
    * arguments:
    *
    * - `value: any`: The found value

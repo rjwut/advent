@@ -25,18 +25,24 @@ We can solve this system as follows:
 Let's solve the $X$-axis equation for $A$:
 
 ```math
-Ax_a = x_p - Bx_b\\
+Ax_a = x_p - Bx_b
+```
+
+```math
 A = \frac{x_p - Bx_b}{x_a}
 ```
 
 Now we do the same for the $Y$-axis:
 
 ```math
-Ay_a = y_p - By_b\\
+Ay_a = y_p - By_b
+```
+
+```math
 A = \frac{y_p - By_b}{y_a}
 ```
 
-Set the equal to each other:
+Set them equal to each other:
 
 ```math
 \frac{x_p - Bx_b}{x_a} = \frac{y_p - By_b}{y_a}
@@ -45,10 +51,22 @@ Set the equal to each other:
 Isolate $B$:
 
 ```math
-\frac{x_p}{x_a}-\frac{Bx_b}{x_a} = \frac{y_p}{y_a}-\frac{By_b}{y_a}\\
-B\left(\frac{y_b}{y_a}-\frac{x_b}{x_a}\right)=\frac{y_p}{y_a}-\frac{x_p}{x_a}\\
-B\left(\frac{x_ay_b-x_by_a}{x_ay_a}\right)=\frac{x_ay_p-x_py_a}{x_ay_a}\\
-B(x_ay_b-x_by_a)=x_ay_p-x_py_a\\
+\frac{x_p}{x_a}-\frac{Bx_b}{x_a} = \frac{y_p}{y_a}-\frac{By_b}{y_a}
+```
+
+```math
+B\left(\frac{y_b}{y_a}-\frac{x_b}{x_a}\right)=\frac{y_p}{y_a}-\frac{x_p}{x_a}
+```
+
+```math
+B\left(\frac{x_ay_b-x_by_a}{x_ay_a}\right)=\frac{x_ay_p-x_py_a}{x_ay_a}
+```
+
+```math
+B(x_ay_b-x_by_a)=x_ay_p-x_py_a
+```
+
+```math
 B=\frac{x_ay_p-x_py_a}{x_ay_b-x_by_a}
 ```
 

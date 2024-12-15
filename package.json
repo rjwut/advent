@@ -19,7 +19,8 @@
     "session": "node ./src/framework/set-session",
     "2016-bonus": "node ./src/solutions/2016/bonus-challenge",
     "2019-25": "node ./src/solutions/2019/day-25.interactive",
-    "2023-21": "node ./src/solutions/2023/day-21.quadratic"
+    "2023-21": "node ./src/solutions/2023/day-21.quadratic",
+    "2024-15": "node ./src/solutions/2024/day-15.interactive"
   },
   "devDependencies": {
     "eslint": "^8.38.0",

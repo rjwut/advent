@@ -131,6 +131,12 @@ Run the computation for the input values for the quadratic fit for 2023 day 21:
 npm run 2023-21
 ```
 
+Run an interactive version of the part two warehouse from 2024 day 15:
+
+```bash
+npm run 2024-15
+```
+
 ## Project Structure
 
 - **Solution code**: These files are code that actually solves the puzzles. They are found under `src/solutions`:

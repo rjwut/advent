@@ -136,7 +136,7 @@ class SimpleGrid {
    */
   coordsOf(value) {
     const index = this.#grid.indexOf(value);
-    return index === -1 ? null : { r: Math.floor(index / this.#rows), c: index % this.#rows };
+    return index === -1 ? null : { r: Math.floor(index / this.#cols), c: index % this.#cols };
   }
 
   /**

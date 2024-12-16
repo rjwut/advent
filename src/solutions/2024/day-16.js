@@ -18,7 +18,7 @@ const TURNS = [ 1, 3 ];
  *
  * - The state at any point in the search must consider not only the current position, but also
  *   orientation.
- * - A "move" (advancing from one step to another) can be either a step forward or a turn.
+ * - A "move" (advancing from one state to another) can be either a step forward or a turn.
  * - A turn is a 90-degree rotation in either direction.
  * - There is no reason to turn twice in a row; every turn is always followed by a forward step.
  * - We don't need to consider turns that cause us to face a wall.

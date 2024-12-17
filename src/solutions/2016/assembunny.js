@@ -72,8 +72,10 @@ class AssembunnyVm extends Vm {
    * Creates a new `AssembunnyVm`, with the registers and operations already set up.
    */
   constructor() {
-    super();
-    this.declareRegisters('a', 'b', 'c', 'd');
+    super({
+      registerNames: [ 'a', 'b', 'c', 'd' ],
+      throwUnheardErrors: false,
+    });
     OPERATIONS.forEach(({ opcode, fn }) => {
       this.parser.opcode(opcode, fn);
     });

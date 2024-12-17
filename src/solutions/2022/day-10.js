@@ -40,8 +40,9 @@ module.exports = async input => {
  */
 const buildVm = input => {
   input = input.replaceAll(ADDX_REGEXP, 'noop\naddx ');
-  const vm = new Vm();
-  vm.declareRegisters('x');
+  const vm = new Vm({
+    registerNames: [ 'x' ],
+  });
   OPERATIONS.forEach(({ opcode, fn }) => {
     vm.parser.opcode(opcode, fn);
   });

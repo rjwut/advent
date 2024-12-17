@@ -17,11 +17,10 @@ Since JavaScript does not have the explicit concept of an interface, `Parser` an
 The basic steps for using a `Vm` with its default parser are as follows:
 
 1. Instantiate the `Vm`.
-2. Declare any needed registers.
-3. Declare opcodes.
-4. `load()` the source code.
-5. Invoke `run()`.
-6. Inspect the `Vm` for results.
+2. Declare opcodes.
+3. `load()` the source code.
+4. Invoke `run()`.
+5. Inspect the `Vm` for results.
 
 For example, suppose we have the following scenario:
 
@@ -33,8 +32,9 @@ For example, suppose we have the following scenario:
 This is what that would look like:
 
 ```js
-const vm = new Vm();
-vm.declareRegisters('a', 'b');
+const vm = new Vm({
+  registerNames: [ 'a', 'b' ],
+});
 vm.parser.opcode('add', add);
 vm.parser.opcode('jump', jump);
 vm.load(source);
@@ -42,17 +42,26 @@ vm.run();
 console.log(vm.getRegister('a'));
 ```
 
+## Constructor
+
+The `Vm` constructor accepts one optional argument: an options object. The following properties are supported:
+
+- `bigint: boolean`: By default, the `Vm`'s input, output, and registers use `number` types. To use `bigint`s instead, set this option to `true`.
+- `ipIncrement: string`: Sets the policy that controls when the `Vm` automatically increments the instruction pointer after executing an instruction:
+  - `'never'`: The instruction pointer will only move if explicitly changed by an instruction or an event listener.
+  - `'unchanged'` (default): The instruction pointer will move only if it hasn't been changed by the instruction or an event listener.
+  - `'always'`: The instruction pointer will always be incremented, even if it has been changed.
+- `parser: Parser`: The parser instance to use. If not provided, a new instance of `DefaultParser` will be used.
+- `registerNames: Array<string>`: An array of register names to declare. If this option is specified, any attempt to read or write a register not declared in this list will result in an error. If this option is not specified, registers will be automatically provisioned (initialized to `0`) as needed.
+- `throwUnheardErrors: boolean`: The `Vm` will emit an `error` event if an error occurs. If no listener is registered for this event, the `Vm` will throw the error instead by default. Set this to `false` to prevent errors from being thrown. Note that the most recent error is always available from the `Vm`'s  read-only `error` property.
+
 ## Registers
 
-The `Vm` will have one or more registers. By default, the only register is one called `ip`, the instruction pointer. This register keeps track of the program offset where the `Vm` is currently executing. You may rename this register by calling `declareIp()`. Programs may directly manipulate the instruction pointer like any other register. The value of the instruction pointer register, whatever its name, is also exposed by the `Vm`'s `ip` property.
+Registers can be used to store integer values. There are no registers by default, but they will be automatically provisioned on first use. Alternatively, you can explicitly declare the registers the program uses by specifying the `registerNames` option. When using this option, any attempt to use an undeclared register will result in an error. All registers are set to `0` when initialized.
 
-By default, attempting to use an unknown register results in an `Error`. This is to help you detect typos in your register names. You must declare any registers that you use other than the instruction pointer register. You do this by passing their names into the `declareRegisters()` method. Unlike `declareIp()`, invoking it multiple times does not remove any previously-declared registers. A newly-declared register starts with a value of `0`.
+There are several methods for working with registers:
 
-Alternatively, you may set the `lazyRegisters` property to `true`. Doing so makes it so that if an attempt is made to read or write to a register that does not exist, it will be automatically provisioned immediately. This may be desirable if you don't know what registers will be used in advance, but you lose the ability to detect typos in register names.
-
-There are several other methods for working with registers:
-
-- `hasRegister(string)`: Checks whether a register exists. (Does not trigger automatic creation under when `lazyRegisters` is `true`.)
+- `hasRegister(string)`: Checks whether a register exists. (Does not trigger auto-provisioning under when the `registerNames` names option is omitted.)
 - `getRegister(string)`: Returns a register's current value.
 - `setRegister(string, number)`: Sets a register's value.
 - `addRegister(string, number)`: Adds a value to a register's existing value.
@@ -64,11 +73,11 @@ A `Parser` is responsible for converting source code into a `Program` instance, 
 
 ### `DefaultParser`
 
-The default implementation of `Parser` is `DefaultParser`. It expects the source to be a mutli-line string, where each line represents an instruction. (Windows line endings are automatically converted to newlines.) The line starts with an opcode token, which identifies the operation to perform. The instruction may also have arguments; if they are present, they come after the opcode token, with a separator between them (a space by default, customizable with the `opcodeSeparator` property). There are also separaters between the arguments (also a space by default, customizable with the `argSeparator` property).
+The default implementation of `Parser` is `DefaultParser`. It expects the source to be a mutli-line string, where each line represents an instruction. (Windows line endings are automatically converted to newlines.) The line starts with an opcode token, which identifies the operation to perform. The instruction may also have arguments; if they are present, they come after the opcode token, with a separator between them (a space by default, customizable with the `opcodeSeparator` property on the parser). There are also separaters between the arguments (also a space by default, customizable with the parser's `argSeparator` property).
 
-Before parsing, opcodes must be registered by invoking `opcode()`. This is how you provide the behavior for each opcode. If an unknown opcode is encountered, an error will be thrown.
+Before parsing, opcodes must be registered by invoking `opcode()` on the parser. This is how you provide the behavior for each opcode. If an unknown opcode is encountered, an error will be thrown.
 
-The `opcode()` method expects two arguments: the opcode string to register, and a function implementing that operation. The implementation function will receive to arguments when invoked: a reference to the `Vm` instance, and an array of the arguments for the instruction. Each argument is either an integer, or string giving the name of a register whose value to be used. (An argument token will be considered an integer if it matches the `RegExp` `/^[+-]?\d+$/`). If the parser encounters an unknown register name, it will throw an `Error`. The `eval()` method on the `Vm` instance will automatically coerce arguments to their actual values for you.
+The `opcode()` method expects two arguments: the opcode string to register, and a function implementing that operation. The implementation function will receive to arguments when invoked: a reference to the `Vm` instance, and an array of the arguments for the instruction. Each argument is either an integer, or string giving the name of a register whose value to be used. (An argument token will be considered an integer if it matches the `RegExp` `/^[+-]?\d+$/`). When implementing an operation, you can use the `eval()` method on the `Vm` instance will automatically coerce arguments to their actual values for you.
 
 ### Custom `Parser` Implementations
 
@@ -150,7 +159,7 @@ The `Vm` class extends `EventEmitter`, so you can register listeners to be notif
 
 Just after the `prestep` event, the `Vm` will record the current position of the instruction pointer, then select the instruction it points at to be executed. After it executes, the default behavior is to increment the instruction pointer only if it remains unchanged from the value it had when it was recorded before the instruction was executed. If it has been changed (by the instruction or a `preop` or `postop` event listener, for example), it will be left as-is.
 
-This behavior can be customized by setting the value of the `ipIncrement` property. The possible values are:
+This behavior can be customized by setting the value of the `ipIncrement` option. The possible values are:
 
 - `'always'`: Always increment the instruction pointer, even if it was changed.
 - `'unchanged'`: Only increment the instruction pointer if it hasn't changed.
@@ -169,9 +178,9 @@ Output can be retrieved from the `Vm` in two different ways:
 - The `Vm` emits an `output` event each time output is produced; register a listener for this event to receive the output.
 - Output is also automatically collected into a queue. You may interact with the queue with the following properties and methods:
   - `outputLength: number`: A read-only property that returns the number of values in the output queue.
-  - `cloneOutput(): Array<number>`: Returns a copy of the output queue. The values remained enqueued.
-  - `dequeueOutput(): number`: Dequeues and returns the next value in the output queue.
-  - `dequeueAllOutput(): Array<number>`: Dequeues and returns all values in the output queue.
+  - `cloneOutput(): number[]|bigint[]`: Returns a copy of the output queue. The values remained enqueued.
+  - `dequeueOutput(): number|bigint|undefined`: Dequeues and returns the next value in the output queue.
+  - `dequeueAllOutput(): number[]|bigint[]`: Dequeues and returns all values in the output queue.
 
 To emit output in your operation implementation, invoke the `output()` method. Only integers are valid output values.
 

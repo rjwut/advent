@@ -90,7 +90,6 @@ class DuetVm extends Vm {
    */
   constructor(version = 1) {
     super();
-    this.lazyRegisters = true;
     Object.entries({
       ...COMMON_OPERATIONS,
       ...OPERATIONS[version],

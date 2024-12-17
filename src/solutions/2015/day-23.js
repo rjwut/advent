@@ -30,8 +30,9 @@ const Vm = require('../vm');
  * @returns {Array} - the puzzle answers
  */
 const solve = input => {
-  const vm = new Vm();
-  vm.declareRegisters('a', 'b');
+  const vm = new Vm({
+    registerNames: [ 'a', 'b' ],
+  });
   Object.entries(OPERATIONS).forEach(([ opcode, fn ]) => {
     vm.parser.opcode(opcode, fn);
   });

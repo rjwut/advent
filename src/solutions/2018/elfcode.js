@@ -114,8 +114,10 @@ class ElfcodeVm extends Vm {
    * Create a new `ElfcodeVm`.
    */
   constructor() {
-    super();
-    this.declareRegisters(0, 1, 2, 3, 4, 5);
+    super({
+      ipIncrement: 'always',
+      registerNames: [ 0, 1, 2, 3, 4, 5 ],
+    });
     OPERATIONS.forEach(({ id, fn }) => {
       this.parser.opcode(id, fn);
     });
@@ -135,7 +137,6 @@ class ElfcodeVm extends Vm {
         this.ip = this.getRegister(this.#ipBind);
       }
     });
-    this.ipIncrement = 'always';
   }
 
   /**

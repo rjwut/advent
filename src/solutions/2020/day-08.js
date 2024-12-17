@@ -81,8 +81,10 @@ class GameBoy extends Vm {
   #seen;
 
   constructor() {
-    super();
-    this.declareRegisters('acc');
+    super({
+      registerNames: [ 'acc' ],
+      throwUnheardErrors: false,
+    });
     this.parser.opcode('acc', (vm, [ arg ]) => {
       this.addRegister('acc', arg);
     });
@@ -98,6 +100,5 @@ class GameBoy extends Vm {
 
       this.#seen.add(this.ip);
     });
-    this.throwUnheardErrors = false;
   }
 }

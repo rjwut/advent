@@ -11,11 +11,11 @@ const AssembunnyVm = require('./assembunny');
  *    `0`, `1`,... pattern. We can do this by listening to the `output` event and calling
  *    `vm.terminate()` when a bad output is detected.
  * 3. We need to detect when the `Vm` has entered into an infinite loop. This can be defined as
- *    a state where all registers (including the instruction pointer) have the same values as a
- *    previous state. We can do this by listening to the `prestep` event and exporting the
- *    registers, converting that to a string, and storing those strings in a `Set`. If we ever go
- *    to store a new state string in the `Set` and find it's already there, we're in an infinite
- *    loop. If we detect this condition, we terminate the `Vm`.
+ *    a state where all registers and the instruction pointer have the same values as a previous
+ *    state. We can do this by listening to the `prestep` event and exporting the registers,
+ *    converting that to a string, appending the instruction pointer, and storing those strings in a
+ *    `Set`. If we ever go to store a new state string in the `Set` and find it's already there,
+ *    we're in an infinite loop. If we detect this condition, we terminate the `Vm`.
  *
  * With these two event listeners in place, the `Vm` will eventually terminate. The starting value
  * of register `a` is valid when the following conditions are all true when the `Vm` terminates:
@@ -44,7 +44,7 @@ module.exports = input => {
   });
   vm.on('prestep', () => {
     // Detect whether we've gone into an infinite loop
-    const state = JSON.stringify(vm.exportRegisters());
+    const state = JSON.stringify(vm.exportRegisters()) + '/' + vm.ip;
 
     if (seenStates.has(state)) {
       vm.terminate();

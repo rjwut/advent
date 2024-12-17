@@ -1,130 +1,52 @@
 const { EventEmitter } = require('events');
-const Parser = require('./parser.default');
+const DefaultParser = require('./parser.default');
 
-const DEFAULT_IP_NAME = 'ip';
 const IP_INCREMENT_VALUES = new Set([ 'never', 'unchanged', 'always' ]);
 
 /**
  * A class for virtual machines. See [README.md](README.md) for details.
  */
 class Vm extends EventEmitter {
+  #options;
+  #ip;
   #registers;
-  #lazyRegisters;
-  #ipIncrement;
-  #throwUnheardErrors;
-  #ipName;
-  #parser;
   #program;
   #input;
   #output;
   #state;
   #error;
   #patches;
+  #zero;
 
   /**
    * Creates a new `Vm`.
    */
-  constructor() {
+  constructor(options) {
     super();
+    this.#options = {
+      bigint: false,
+      ipIncrement: 'unchanged',
+      parser: new DefaultParser(),
+      registerNames: undefined,
+      throwUnheardErrors: true,
+      ...options,
+    };
+
+    if (!IP_INCREMENT_VALUES.has(this.#options.ipIncrement)) {
+      throw new Error(`Invalid ipIncrement option value: ${this.#options.ipIncrement}`);
+    }
+
+    this.#ip = 0;
     this.#registers = new Map();
-    this.#lazyRegisters = false;
-    this.#ipIncrement = 'unchanged';
-    this.#throwUnheardErrors = true;
-    this.#registers.set(DEFAULT_IP_NAME, 0);
-    this.#ipName = DEFAULT_IP_NAME;
-    this.#parser = new Parser();
+    this.#zero = this.#options.bigint ? 0n : 0;
+    this.#options.registerNames?.forEach(
+      name => this.#registers.set(name, this.#zero)
+    );
     this.#input = [];
     this.#output = [];
     this.#state = 'ready';
     this.#error = null;
     this.#patches = new Map();
-  }
-
-  /**
-   * @returns {boolean} - whether registers will be automatically declared upon first use
-   */
-  get lazyRegisters() {
-    return this.#lazyRegisters;
-  }
-
-  /**
-   * @param {*} lazyRegisters - whether registers will be automatically declared upon first use
-   * (truthy) or if an error will be thrown (falsy)
-   */
-  set lazyRegisters(lazyRegisters) {
-    this.#lazyRegisters = !!lazyRegisters;
-  }
-
-  /**
-   * Tells the `Vm` whether it should auto-increment the instruction pointer after an operation
-   * completes. The possible values are:
-   *
-   * - `'never'`: Leave it alone. The instruction pointer only moves when explicitly changed by
-   *   setting the `ip` property (or updating the corresponding register).
-   * - `'unchanged'` (default): On completion of an operation, if the instruction pointer still
-   *   points to the same instruction as it did just before the operation, the `Vm` will
-   *   automatically increment it. Otherwise, it will be left alone.
-   * - `'always'`: The instruction pointer is always incremented after an operation completes,
-   *   even if the operation already moved it.
-   *
-   * @returns {string} - when the instruction pointer should be auto-incremented
-   */
-  get ipIncrement() {
-    return this.#ipIncrement;
-  }
-
-  /**
-   * @param {string} - the new ipIncrement value
-   */
-  set ipIncrement(ipIncrement) {
-    if (!IP_INCREMENT_VALUES.has(ipIncrement)) {
-      throw new Error(`Invalid ipIncrement value: ${ipIncrement}`);
-    }
-
-    this.#ipIncrement = ipIncrement;
-  }
-
-  /**
-   * @returns {boolean} - whether the `Vm` will throw any raised `Error` if there are no `error`
-   * event listeners
-   */
-  get throwUnheardErrors() {
-    return this.#throwUnheardErrors;
-  }
-
-  /**
-   * @param {*} - a truthy value causes the `Vm` to throw if an `Error` occurs and there are no
-   * registered `error` listeners; a falsy value cause it to simply terminate; in any case, the
-   * `Error` is still available via the read-only `error` property
-   */
-  set throwUnheardErrors(throwUnheardErrors) {
-    this.#throwUnheardErrors = !!throwUnheardErrors;
-  }
-
-  /**
-   * Creates new registers with the given names. Each named register will be set to `0`. The
-   * instruction pointer register can be omitted. If it is not named `ip`, register it using the
-   * `declareIp()` method.
-   *
-   * @param {...any} names - the registers to create
-   */
-  declareRegisters(...names) {
-    names.forEach(name => {
-      this.#registers.set(name, 0);
-    });
-  }
-
-  /**
-   * Changes the name of the instruction pointer. The old instruction pointer register will be
-   * deleted, and a new one will be created with the given name and set to `0`. If `declareIp()` is
-   * never invoked, the instruction pointer will be named `ip`.
-   *
-   * @param {string} name - the name of the instruction pointer.
-   */
-  declareIp(name) {
-    this.#registers.delete(this.#ipName);
-    this.#ipName = name;
-    this.#registers.set(name, 0);
   }
 
   /**
@@ -135,7 +57,7 @@ class Vm extends EventEmitter {
    * @throws {Error} - if the program failed to parse
    */
   load(source) {
-    this.#program = this.#parser.parse(source);
+    this.#program = this.#options.parser.parse(source, this.#options.bigint);
     this.reset();
   }
 
@@ -165,19 +87,7 @@ class Vm extends EventEmitter {
    * @returns {Parser} - the `Parser` instance
    */
   get parser() {
-    return this.#parser;
-  }
-
-  /**
-   * @param {Parser} parser - the `Parser` instance to use
-   * @throws {TypeError} - if the argument is not a `Parser` instance
-   */
-  set parser(parser) {
-    if (!(parser instanceof Parser)) {
-      throw new TypeError('Argument is not an instance of the Parser class');
-    }
-
-    this.#parser = parser;
+    return this.#options.parser;
   }
 
   /**
@@ -191,19 +101,19 @@ class Vm extends EventEmitter {
    * @returns {number} - the current value of the instruction pointer register
    */
   get ip() {
-    return this.#registers.get(this.#ipName);
+    return this.#ip;
   }
 
   /**
    * @param {number} ip - the new value of the instruction pointer register
    * @throws {TypeError} - if `offset` is not an integer
    */
-  set ip(offset) {
-    if (!Number.isInteger(offset)) {
-      throw new TypeError('Instruction pointer offset must be an integer');
+  set ip(ip) {
+    if (!Number.isInteger(ip)) {
+      throw new TypeError('Not an integer: ' + ip);
     }
 
-    this.#registers.set(this.#ipName, offset);
+    this.#ip = ip;
   }
 
   /**
@@ -220,7 +130,7 @@ class Vm extends EventEmitter {
    * Returns the value of the named register.
    *
    * @param {string} name - the name of the register
-   * @returns {number} - the register's value
+   * @returns {number|bigint} - the register's value
    * @throws {Error} - if there's no register with that name
    */
   getRegister(name) {
@@ -231,36 +141,26 @@ class Vm extends EventEmitter {
    * Sets the value of the named register.
    *
    * @param {string} name - the name of the register
-   * @param {number} value - the value to set
+   * @param {number|bigint} value - the value to set
    * @throws {Error} - if there's no register with that name
    * @throws {Error} - if `value` is not an integer
    */
   setRegister(name, value) {
     this.#getRegisterValue(name); // assert that the register exists
-
-    if (!Number.isInteger(value)) {
-      throw new TypeError('Register values must be integers');
-    }
-
-    this.#registers.set(name, value);
+    this.#registers.set(name, this.#coerceValue(value));
   }
 
   /**
    * Adds the given value to the current value of the named register.
    *
    * @param {string} name - the name of the register
-   * @param {number} value - the value to add
+   * @param {number|bigint} value - the value to add
    * @throws {Error} - if there's no register with that name
    * @throws {Error} - if `value` is not an integer
    */
   addRegister(name, value) {
-    const oldValue = this.#getRegisterValue(name); // assert that the register exists
-
-    if (!Number.isInteger(value)) {
-      throw new TypeError('Register values must be integers');
-    }
-
-    this.#registers.set(name, oldValue + value);
+    const oldValue = this.#getRegisterValue(name);
+    this.#registers.set(name, oldValue + this.#coerceValue(value));
   }
 
   /**
@@ -281,7 +181,9 @@ class Vm extends EventEmitter {
    * @returns {number} - the corresponding value
    */
   eval(arg) {
-    if (typeof arg === 'number') {
+    const argType = typeof arg;
+
+    if (argType === 'number' || argType === 'bigint') {
       return arg;
     }
 
@@ -292,7 +194,7 @@ class Vm extends EventEmitter {
    * Enqueues an input value to be consumed by the program. If the `Vm` is blocked, invoking this
    * will unblock it.
    *
-   * @param {number} value - the value to enqueue
+   * @param {number|bigint} value - the value to enqueue
    * @throws {TypeError} - if the value is not an integer
    */
   enqueueInput(value) {
@@ -300,11 +202,7 @@ class Vm extends EventEmitter {
       throw new Error('Program already terminated');
     }
 
-    if (!Number.isInteger(value)) {
-      throw new TypeError('Input must be an integer');
-    }
-
-    this.#input.push(value);
+    this.#input.push(this.#coerceValue(value));
     const unblocked = this.#state === 'blocked';
     this.#state = 'ready';
 
@@ -317,7 +215,7 @@ class Vm extends EventEmitter {
    * Reads an input value from the input queue. If there is no input available, the `Vm` will
    * block.
    *
-   * @returns {number|undefined} - the input value, or `undefined` if we've blocked
+   * @returns {number|bigint|undefined} - the input value, or `undefined` if we've blocked
    * @throws {Error} - if the program is terminated or we're already blocked on input
    */
   readInput() {
@@ -340,7 +238,7 @@ class Vm extends EventEmitter {
   /**
    * Causes the VM to emit an `output` event with the given value.
    *
-   * @param {number} value - the value to output
+   * @param {number|bigint} value - the value to output
    * @throws {Error} - if program is terminated or blocked on input
    * @throws {TypeError} - if `value` is not an integer
    */
@@ -353,11 +251,7 @@ class Vm extends EventEmitter {
       throw new Error('VM is blocked on input');
     }
 
-    if (!Number.isInteger(value)) {
-      throw new TypeError('Output value must be an integer');
-    }
-
-    this.emit('output', value);
+    this.emit('output', this.#coerceValue(value));
     this.#output.push(value);
   }
 
@@ -369,21 +263,21 @@ class Vm extends EventEmitter {
   }
 
   /**
-   * @returns {Array<number>} - a copy of the output array (the output is not dequeued)
+   * @returns {Array<number|bigint>} - a copy of the output array (the output is not dequeued)
    */
   cloneOutput() {
     return [ ...this.#output ];
   }
 
   /**
-   * @returns {number} - the next dequeued output value
+   * @returns {number|bigint} - the next dequeued output value
    */
   dequeueOutput() {
     return this.#output.shift();
   }
 
   /**
-   * @returns {Array<number>} - a copy of the output array (which is now dequeued)
+   * @returns {Array<number|bigint>} - a copy of the output array (which is now dequeued)
    */
   dequeueAllOutput() {
     const output = this.#output;
@@ -440,7 +334,7 @@ class Vm extends EventEmitter {
     this.#error = error ?? null;
     this.emit('terminated', error);
 
-    if (error && this.#throwUnheardErrors && !this.listenerCount('terminated')) {
+    if (error && this.#options.throwUnheardErrors && !this.listenerCount('terminated')) {
       throw error;
     }
   }
@@ -459,7 +353,8 @@ class Vm extends EventEmitter {
   /**
    * Resets the `Vm`. This does the following:
    *
-   * - Sets all registers (including the instruction pointer) to `0`.
+   * - Sets the instruction pointer to `0`.
+   * - Sets all registers to `0`.
    * - Clears the input and output queues.
    * - Sets the state to `'ready'`.
    * - Clears the value of the `error` property.
@@ -468,13 +363,32 @@ class Vm extends EventEmitter {
    */
   reset() {
     for (let key of this.#registers.keys()) {
-      this.#registers.set(key, 0);
+      this.#registers.set(key, this.#zero);
     }
 
+    this.#ip = 0;
     this.#input = [];
     this.#output = [];
     this.#state = 'ready';
     this.#error = null;
+  }
+
+  /**
+   * Asserts that the given value is an integer, and coercing it to a number or bigint as
+   * appropriate.
+   *
+   * @param {number|bigint} value - the value to test
+   * @returns {number|bigint} - the value, possibly converted to a `bigint`
+   * @throws {TypeError} - if `value` is not an integer
+   */
+  #coerceValue(value) {
+    const valueType = typeof value;
+
+    if (valueType === 'bigint' || Number.isInteger(value)) {
+      return this.#options.bigint ? BigInt(value) : Number(value);
+    }
+
+    throw new TypeError(`Not an integer: ${value}`);
   }
 
   /**
@@ -503,8 +417,8 @@ class Vm extends EventEmitter {
       }
 
       // Determine whether we should increment the instruction pointer.
-      if (this.#state === 'running' && this.#ipIncrement !== 'never') {
-        if (this.#ipIncrement === 'always' || this.ip === ip) {
+      if (this.#state === 'running' && this.#options.ipIncrement !== 'never') {
+        if (this.#options.ipIncrement === 'always' || this.ip === ip) {
           this.ip++;
         }
       }
@@ -543,9 +457,9 @@ class Vm extends EventEmitter {
     const value = this.#registers.get(name);
 
     if (value === undefined) {
-      if (this.#lazyRegisters) {
-        this.#registers.set(name, 0);
-        return 0;
+      if (this.#options.registerNames === undefined) {
+        this.#registers.set(name, this.#zero);
+        return this.#zero;
       }
 
       throw new Error(`Register does not exist: ${name}`);

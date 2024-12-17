@@ -26,8 +26,8 @@ class DefaultParser extends Parser {
    * arguments when invoked:
    *
    * - `vm` (`Vm`): A reference to the `Vm`
-   * - `args` (`Array<number|string>`): The instruction arguments; each is either an integer or the
-   *   string name of a register
+   * - `args` (`Array<number|bigint|string>`): The instruction arguments; each is either an integer
+   *   or the string name of a register
    *
    * The implementation should not modify the instruction pointer unless execution should move to a
    * different instruction than the next offset.
@@ -94,22 +94,23 @@ class DefaultParser extends Parser {
    * - Arguments are delimited by an argument separator (a space by default).
    *
    * @param {string} source - the source code to parse
+   * @param {boolean} bigint - if numbers should be treated as bigints
    * @returns {DefaultProgram} - the resulting program
    */
-  parse(source) {
+  parse(source, bigint) {
     return new DefaultProgram(
       source
       .replaceAll('\r', '') // deal with Windows line endings
       .trim()
       .split('\n')
-      .map(line => this.#parseLine(line))
+      .map(line => this.#parseLine(line, bigint))
     );
   }
 
   /**
    * Looks up an opcode.
    *
-   * @param {string} opcode - the opcode
+   * @param {*} opcode - the opcode
    * @returns {Function} - the implementation
    * @throws {Error} - if the opcode is not recognized
    */
@@ -129,12 +130,13 @@ class DefaultParser extends Parser {
    *
    * - `opcode` (`string`): The opcode
    * - `fn` (`Function`): The operation's implementation function
-   * - `args` (`Array<number|string>`): The instruction arguments
+   * - `args` (`Array<number|bigint|string>`): The instruction arguments
    *
    * @param {string} line - the source line
+   * @param {boolean} bigint - if numbers should be treated as bigints
    * @returns {Object} - the parsed instruction
    */
-  #parseLine(line) {
+  #parseLine(line, bigint) {
     const sepIndex = line.indexOf(this.#opcodeSeparator);
     let opcode, args;
 
@@ -150,7 +152,7 @@ class DefaultParser extends Parser {
     const fn = this.getOperation(opcode);
     args.forEach((arg, i) => {
       if (INTEGER_REGEXP.test(arg)) {
-        args[i] = parseInt(arg, 10);
+        args[i] = bigint ? BigInt(arg) : parseInt(arg, 10);
       }
     });
     return { opcode, fn, args };

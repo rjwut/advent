@@ -12,10 +12,11 @@ class IntcodeVm extends Vm {
    * Creates a new Intcode VM.
    */
   constructor() {
-    super();
+    super({
+      parser: new IntcodeParser(),
+    });
     this.#parameterMode = 0;
     this.#relativeBase = 0;
-    this.parser = new IntcodeParser();
   }
 
   /**

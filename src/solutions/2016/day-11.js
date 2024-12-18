@@ -1,401 +1,324 @@
-const { group, match, split } = require('../util');
-const aStar = require('../a-star');
+const { match, split } = require('../util');
+const {
+  getElevator, putElevator, putObject, getFloors, computeGoal,
+  getPairId, normalize, debt, isMicrochip
+} = require('./day-11.state');
+const PriorityQueue = require('../priority-queue');
 
 const OBJECTS_REGEXP = /(?<element>[a-z]+)(?:-compatible)? (?<type>generator|microchip)/gm;
+const DIRECTIONS = [ -1, 1 ];
 
 /**
  * # [Advent of Code 2016 Day 11](https://adventofcode.com/2016/day/11)
  *
- * Simplified rule description:
+ * ## Simplified Rule Description
  *
  * - There are four floors connected by an elevator.
  * - There are two types of objects: generators and microchips.
  * - Objects can be moved between floors via the elevator.
- * - You and the elevator start at the bottom floor, and can only move one
- *   floor at a time.
- * - The elevator can only move if it carries you and at least one object. It
- *   can carry no more than two objects in addition to you.
- * - Each microchip is compatible with exactly one unique generator, identified
- *   by the element it uses to generate power.
- * - A microchip is fried if it is ever present on the same floor as an
- *   incompatible generator while its compatible generator is not present.
- * - Objects in the elevator are considered to be on the floor the elevator is
- *   on.
- * - The objective is to move all objects to the top floor.
+ * - The elevator starts at the bottom floor, and can only move one floor at a time.
+ * - The elevator can only move if it carries exactly one or two objects.
+ * - Each microchip is compatible with exactly one unique generator, identified by the element it
+ *   uses to generate power. For example, the hydrogen microchip is only compatible with the
+ *   hydrogen generator.
+ * - A microchip will be fried if it is ever on the same floor as an incompatible generator without
+ *   its compatible generator also on that floor.
+ * - The objective is to move all objects to the top floor without frying any chips.
+ * - The input describes each floor's contents in English, one sentence per line, starting with the
+ *   first floor and each subsequent line describing the next floor up.
+ * - Each input line is formatted as follows:
+ *   ```txt
+ *   The <ordinal> floor contains <list of objects|"nothing relevant">.`
+ *   ```
+ * - An object list is formatted as `<object>[<separator><object>[...]]`, where `<separator>` is one
+ *   of `and`, `, `, or `, and`.
+ * - Each object is formatted either as `a <element> generator` or `a <element>-compatible
+ *   microchip`.
+ * - For part two of the puzzle, two more generator/microchip pairs are added to the initial state
+ *   at bottom floor.
  *
- * Observations:
- * 
- * All chip/generator pairs are interchangable. This means, for example, that
- * the following two states are equivalent:
+ * ## Improving Search Performance
  *
- * ```
- * 3 .  .  .  .  .   |  3 .  .  .  .  . 
- * 2 .  .  .  gl .   |  2 .  .  .  gh . 
- * 1 .  gh .  .  .   |  1 .  gl .  .  . 
- * 0 E  .  mh .  ml  |  0 E  .  ml .  mh
- * ```
+ * - Prune any search branch that reaches a state that we've seen before with the same or fewer
+ *   steps.
+ * - Don't move one object up a floor when it's possible to move two. Don't move two objects down a
+ *   floor when it's possible to move only one.
+ * - When the bottom floor becomes empty, we've effectively made our building shorter. Never move
+ *   objects below the lowest non-empty floor.
+ * - All chip/generator pairs are interchangable. For example, here is the initial state of the
+ *   example given in part one:
+ *   ```txt
+ *   F4 .  .  .  .  .
+ *   F3 .  .  .  LG .
+ *   F2 .  HG .  .  .
+ *   F1 E  .  HM .  LM
+ *   ```
+ *   Because chip/generator pairs are interchangable, the following state is equivalent:
+ *   ```txt
+ *   F4 .  .  .  .  .
+ *   F3 .  .  .  HG .
+ *   F2 .  LG .  .  .
+ *   F1 E  .  LM .  HM
+ *   ```
+ *   The solution should not pursue a search branch past a state that is equivalent to one already
+ *   pursued. We can do this by normalizing the representation of a state so that equivalent states
+ *   are represented the same way.
  *
- * Implementation details:
+ * ## Implementation Details
  *
- * - Although the problem explicitly states there are four floors, my parser
- *   would work for any number of floors. It assumes, however, that they are
- *   listed in order. It also makes no assumptions about what possible elements
- *   might appear.
- * - I treat the problem space as a graph: each potential state is a node, and
- *   the edges connect states that can be reached with a single move. I can
- *   then solve the problem with an A* search, using the sum of each object's
- *   distance from the top floor as the heuristic.
- * - Objects are converted to unique two-character codes, where the first
- *   character is the type (either `g` for generator or `m` for microchip) and
- *   the second is a letter assigned to the element.
- * - When a new state is generated, it is normalized so that the letters are
- *   assigned to elements in the order in which they are encountered as the
- *   floors are iterated. The codes on each floor are also sorted. This ensures
- *   that equivalent states can be identified because their normalized states
- *   will be identical.
- * - Each state has a string representation, which is simply the list of floors
- *   separated by slashes, with the objects on each floor separated by commas.
- *   At the end is a colon followed by the index of the elevator's current
- *   floor. This string representation is what represents a node to the A*
- *   algorithm. Since equivalent states translated to identical strings, the A*
- *   algorithm will treat them as the same node, reducing the search space.
+ * - From now on, we'll refer to floors as 0-indexed instead of 1-indexed to simplify working with
+ *   the data. This means that the top floor is at index `3`.
+ * - The problem explicitly states that there are four floors, and we will leverage this fact to
+ *   represent the location of any object as two bits: `00`, `01`, `10`, or `11`.
+ * - Objects will be assigned IDs as follows:
+ *   - `0`: element 0's generator
+ *   - `1`: element 0's microchip
+ *   - `2`: element 1's generator
+ *   - `3`: element 1's microchip
+ *   - ...
+ * - To reduce object instantiations and maximize the speed of the search, the state of the system
+ *   is represented as a single integer, where each pair of bits represents the location of an
+ *   object or the elevator. Starting with the least significant bits, the object locations are
+ *   encoded in the following order: elevator, object 0, object 1, object 2, etc. So the example
+ *   above could be encoded as follows:
+ *   ```txt
+ *   00 01 00 10 00
+ *    │  │  │  │  └─ elevator on floor 0
+ *    │  │  │  └──── object 0 on floor 2
+ *    │  │  └─────── object 1 on floor 0
+ *    │  └────────── object 2 on floor 1
+ *    └───────────── object 3 on floor 0
+ *   ```
+ * - Search state consists of the state of the system itself and the number of steps taken to reach
+ *   that state.
+ * - To avoid duplicate work, system state will be normalized so that equivalent states are
+ *   represented by the same number. The normalization process is as follows:
+ *   1. Ignoring the elevator bits, break the state bits into four-bit chunks representing the
+ *      locations of each pair of objects for an element. For example, the state above would be
+ *      broken into the following two four-bit chunks: `0010` (element 0) and `0001` (element 1).
+ *   2. Sort the chunks in ascending order. In the above example, the positions of the objects for
+ *      element 0 would be swapped with the positions of the corresponding objects for element 1.
+ *   3. Reassemble the state bits from the sorted chunks and restore the elevator bits. Thus, the
+ *      original state `0001001000` is normalized as `0010000100`.
+ * - The heuristic distance between a state and the goal state is approximated by the sum of the
+ *   distance of each object from its goal position, called the state's "debt." This debt value is
+ *   used to prioritize the search queue: lower debt states are explored before higher debt ones.
  *
- * The example scenario given in the puzzle text becomes impossible with the
- * additional objects on the ground floor in part two, so it isn't tested.
+ * The search algorithm:
+ *
+ * 1. Create a priority queue with the initial search state (the starting system state and zero
+ *    steps).
+ * 2. Create a `Map` to store the best number of steps to reach each state. Number of steps for
+ *    states not present in the `Map` is considered to be `Infinity`.
+ * 3. While the queue is not empty:
+ *    1. Dequeue the state with the lowest debt value.
+ *    2. If this state has already been seen with the same or fewer steps, skip it.
+ *    3. Store the number of steps taken to reach this state.
+ *    4. If we've reached to goal step, skip to the next queue item.
+ *    5. Determine all possible moves from the elevator's current floor:
+ *       - Elevator can move up or down (but not past the bottom or top floors).
+ *       - Elevator could move one or two objects (but not more than what's on the current floor).
+ *       - Prune branches that are unsafe (microchip present with an incompatible generator without
+ *         its compatible generator), or that won't lead to optimal solutions as described in the
+ *         "Improving Search Performance" section above.
+ *       - Enqueue the resulting states.
+ *  4. Retrive the number of steps to reach the goal state from the `Map`.
+ *
+ * A move is safe if the floor the elevator left and the floor it arrived at are both safe after the
+ * move. A floor is safe if there are no generators on the floor, or all microchips on the floor are
+ * paired with their generators.
+ *
+ * To facilitate testability, all the functions that can query or manipulate the state of the system
+ * are encapsulated in a separate module, `day-11.state.js`.
  *
  * @param {string} input - the puzzle input
  * @returns {Array} - the puzzle answers
  */
-module.exports = input => {
-  const startState = parse(input);
-  const steps1 = run(startState);
-  startState.amendGroundFloor('gelerium', 'melerium', 'gdilithium', 'mdilithium');
-  const steps2 = run(startState);
-  return [ steps1, steps2 ];
+module.exports = (input, onlyPart1) => {
+  const { state, objectCount } = parse(input);
+
+  if (onlyPart1) {
+    return run(state, objectCount);
+  }
+
+  return [ 0, 4 ].map(
+    extraObjects => run(state, objectCount + extraObjects)
+  );
 };
 
 /**
- * Parses the puzzle input and produces a `State` object representing it.
+ * Parses the puzzle input and produces an integer represeting the initial state. The returned
+ * object has two properties:
+ *
+ * - `state: number`: The integer representing the system's initial state
+ * - `objectCount: number`: The number of objects in the system
  *
  * @param {string} input - the puzzle input
- * @returns {State} - the beginning status
+ * @returns {Object} - the initial state data
  */
-const parse = input => new State(
-  split(input).map(
-    floor => match(floor, OBJECTS_REGEXP)
-      .map(object => {
-        let { element, type } = object;
-        return new Item(type[0] + element);
-      })
-  ), 0
-);
+const parse = input => {
+  // Parse each line into an array of objects describing the items
+  const floors = [];
+  let elements = new Set();
+  split(input).forEach(line => {
+    const floor = [];
+    const objects = match(line, OBJECTS_REGEXP);
+    objects.forEach(object => {
+      elements.add(object.element);
+      floor.push(object);
+    });
+    floors.push(floor);
+  });
 
-/**
- * Finds the solution given the starting state.
- *
- * @param {State} startState - the starting state
- * @returns {number} - the number of moves required
- */
-const run = startState => {
-  const stateCache = new Map();
-  const prefix = '/'.repeat(startState.floorCount - 1);
-
-  /**
-   * Returns whether the given `State` key represents the goal `State`.
-   *
-   * @param {string} stateKey - the key to test
-   * @returns {boolean} - whether it's the goal `State`
-   */
-  const endPredicate = stateKey => stateKey.startsWith(prefix);
-
-  /**
-   * Returns objects representing the edges of the graph connected to the node
-   * represented by the given `State` key.
-   *
-   * @param {string} stateStr - the key for the `State`
-   * @returns {Array<Object>} - the edges
-   */
-  const getEdges = stateStr => getNextStateKeys(stateStr).map(stateKey => ({ node: stateKey }));
-
-  /**
-   * Returns the `State` object corresponding to the given key. The `State`
-   * objects are cached and re-used.
-   *
-   * @param {string} stateKey - the string key representing the state
-   * @returns {State} - the corresponding state object
-   */
-  const getState = stateKey => {
-    let state = stateCache.get(stateKey);
-
-    if (!state) {
-      state = new State(stateKey);
-      stateCache.set(stateKey, state);
-    }
-
-    return state;
-  };
-
-  /**
-   * Caches the given `State` object.
-   *
-   * @param {State} state - the `State` object to cache
-   * @returns {string} - the key under which the object was cached
-   */
-  const cacheState = state => {
-    const stateKey = state.toString();
-    stateCache.set(stateKey, state);
-    return stateKey;
-  }
-
-  /**
-   * Determines what `State` keys are adjacent to the given `State` key.
-   *
-   * @param {string} stateKey - the key for the current `State`
-   * @returns {Array<string>} - the keys for the adjacent `State`s
-   */
-  const getNextStateKeys = stateKey => getState(stateKey).possibleMoves().map(cacheState);
-
-  /**
-   * Returns the heuristic cost for the given `State` key. States that are
-   * closer to the goal state will return lower heuristic costs.
-   *
-   * @param {string} key - the `State` key to evaluate
-   * @returns {number} - the heuristic cost
-   */
-  const heuristic = key => {
-    const floors = key.substring(0, key.indexOf(':')).split('/');
-    const topFloor = floors.length - 1;
-    return floors.map(floor => floor.split(',').length)
-      .reduce((score, floor, i) => score + (topFloor - i) * floor, 0);
-  };
-
-  const startStateKey = cacheState(startState);
-  const result = aStar(startStateKey, endPredicate, getEdges, heuristic);
-  return result ? result.path.length - 1 : undefined;
+  // Convert that to a state value
+  elements = [ ...elements.values() ];
+  const objectCount = elements.length * 2;
+  let state = 0;
+  floors.forEach((objects, floorIndex) => {
+    objects.forEach(({ element, type }) => {
+      const elementIndex = elements.indexOf(element);
+      const typeIndex = type === 'generator' ? 0 : 1;
+      const id = elementIndex * 2 + typeIndex;
+      state = putObject(state, id, floorIndex);
+    });
+  });
+  state = normalize(state, objectCount);
+  return { state, objectCount: elements.length * 2 };
 };
 
 /**
- * Represents a puzzle state.
- */
-class State {
-  #floors;
-  #elevator;
-  #key;
-
-  /**
-   * Creates a new `State` object.
-   *
-   * @param {Array<Item>|string} arg0 - the array representing the floors, or
-   * the `State` key to "hydrate"
-   * @param {number} [arg1] - the index of the floor where the elevator is
-   * located (ignored if `arg0` is a string)
-   */
-  constructor(arg0, arg1) {
-    if (typeof arg0 === 'string') {
-      // Hydrate from string
-      this.#key = arg0;
-      const [ floorsPart, elevatorPart ] = arg0.split(':');
-      this.#floors = floorsPart.split('/').map(
-        floorStr => floorStr.split(',').map(
-          key => new Item(key)
-        )
-      );
-      this.#elevator = parseInt(elevatorPart);
-    } else {
-      this.#floors = arg0;
-      this.#elevator = arg1;
-      this.#normalize();
-    }
-  }
-
-  /**
-   * @returns {number} - the number of floors in the building
-   */
-  get floorCount() {
-    return this.#floors.length;
-  }
-
-  /**
-   * Adds `Item`s for the given keys to the ground floor (needed for part two).
-   *
-   * @param  {...string} itemKeys - the keys for the `Item`s to add
-   */
-  amendGroundFloor(...itemKeys) {
-    const floor = this.#floors[0];
-    itemKeys.forEach(key => {
-      floor.push(new Item(key));
-    });
-    this.#normalize();
-  }
-
-  /**
-   * Determines the possible next `State`s from the current one.
-   *
-   * @returns {Array<State>} - the next `State`s
-   */
-  possibleMoves() {
-    const toFloors = [];
-
-    if (this.#elevator < this.#floors.length - 1) {
-      toFloors.push(this.#elevator + 1);
-    }
-
-    if (this.#elevator > 0) {
-      toFloors.push(this.#elevator - 1);
-    }
-
-    const fromFloor = this.#floors[this.#elevator];
-    const newStates = [];
-    toFloors.filter(
-      floorIndex => floorIndex >= 0 && floorIndex < this.#floors.length
-    ).forEach(toIndex => {
-      fromFloor.forEach((item1, i) => {
-        for (let j = i; j < fromFloor.length; j++) {
-          const newState = this.#move(toIndex, i === j ? [ item1 ] : [ item1, fromFloor[j] ]);
-
-          if (newState) {
-            newStates.push(newState);
-          }
-        }
-      });
-    });
-    return newStates;
-  }
-
-  /**
-   * Returns a string key representing this `State`.
-   * @returns 
-   */
-  toString() {
-    return this.#key;
-  }
-
-  /**
-   * Creates a new `State` that reflects moving the indicated item(s). If the
-   * move is unsafe, `move()` will return `null`.
-   *
-   * @param {number} toIndex - the index of the floor to which the `Item`s are
-   * to be moved
-   * @param {Array<Item>} item - the item(s) to move
-   * @returns {State|null} - the new `State`, nor null if the move is unsafe
-   */
-  #move(toIndex, items) {
-    const fromFloor = this.#floors[this.#elevator].filter(item => !items.includes(item));
-    const toFloor = [ ...this.#floors[toIndex], ...items ];
-
-    if (isSafe(fromFloor) && isSafe(toFloor)) {
-      const floors = this.#floors.map((floor, i) => {
-        if (i === this.#elevator) {
-          return fromFloor;
-        }
-
-        if (i === toIndex) {
-          return toFloor;
-        }
-
-        return [ ...floor ];
-      });
-      return new State(floors, toIndex);
-    }
-  }
-
-  /**
-   * Because item pairs are interchangeable, `State`s where the elements of
-   * item pairs are switched represent the same logical state. This method will
-   * rename the elements so that the string keys that represent equivalent
-   * `State`s will be identical.
-   */
-  #normalize() {
-    const map = new Map();
-    const floors = this.#floors.map(
-      floor => floor.map(
-        item => {
-          let normalized = map.get(item.element);
-
-          if (!normalized) {
-            normalized = String.fromCharCode(map.size + 97);
-            map.set(item.element, normalized);
-          }
-
-          return new Item(item.type + normalized);
-        }
-      ).sort(Item.comparator)
-    );
-    this.#floors = floors;
-    this.#key = this.#floors.map(
-      floor => floor.map(item => item.toString()).join(',')
-    ).join('/') + ':' + this.#elevator;
-  }
-}
-
-/**
- * Represents an item (a generator or microchip).
- */
-class Item {
-  /**
-   * Sorts `Item`s by their keys to ensure that equivalent `State`s can be
-   * correctly identified without being affected by the order of the `Item`s on
-   * the floors.
-   *
-   * @param {Item} i1 - the first `Item`
-   * @param {Item} i2 - the second `Item`
-   * @returns {number} - value as needed by `Array.prototype.sort()`.
-   */
-  static comparator(i1, i2) {
-    const i1Key = i1.toString();
-    const i2Key = i2.toString();
-    return i1Key === i2Key ? 0 : (i1Key < i2Key ? -1 : 1);
-  }
-
-  #key;
-
-  /**
-   * Creates a new `Item` from its key.
-   *
-   * @param {string} key - the `Item` key
-   */
-  constructor(key) {
-    this.#key = key;
-  }
-
-  /**
-   * @returns {string} - `'g'` for a generator or `'m'` for a microchip
-   */
-  get type() {
-    return this.#key[0];
-  }
-
-  /**
-   * @returns {string} - the `Item`'s element
-   */
-  get element() {
-    return this.#key.substring(1);
-  }
-
-  /**
-   * Returns the `Item`'s key.
-   *
-   * @returns {string} - the key
-   */
-  toString() {
-    return this.#key;
-  }
-}
-
-/**
- * Returns `false` if any microchips would be fried with the given floor
- * configuration; `true` otherwise.
+ * Perform a priority search to find the optimal solution.
  *
- * @param {Array<Item>} floor - the floor configuration to test
- * @returns {boolean} - whether the floor configuration is safe
+ * @param {number} initialState - the initial problem state
+ * @param {number} objectCount - the number of objects in the system
+ * @returns {number} - the minimum number of steps to reach the goal state
  */
-const isSafe = floor => {
-  const groups = group(floor, item => item.type);
-  const microchips = groups.get('m') ?? [];
-  const generators = groups.get('g') ?? [];
-  return microchips.every(microchip => {
-    const compatible = generators.find(generator => generator.element === microchip.element);
-    const incompatible = generators.find(generator => generator.element !== microchip.element);
-    return compatible || !incompatible;
-  })
+const run = (initialState, objectCount) => {
+  const goal = computeGoal(objectCount);
+  const queue = new PriorityQueue((a, b) => debt(a.state) - debt(b.state));
+  queue.enqueue({ state: initialState, steps: 0 });
+  const best = new Map();
+
+  do {
+    const { state, steps } = queue.dequeue();
+    const bestSteps = best.get(state) ?? Infinity;
+
+    if (steps >= bestSteps) {
+      continue; // We've already seen a better solution than this one
+    }
+
+    best.set(state, steps);
+
+    if (state === goal) {
+      // Everything's on the top floor!
+      continue;
+    }
+
+    // Retrieve the objects on the elevator's current floor
+    const fromFloorIndex = getElevator(state);
+    const floors = getFloors(state, objectCount);
+    const lowestNonEmptyFloor = floors.findIndex(floor => floor.length);
+    const fromFloor = floors[fromFloorIndex];
+    const newSteps = steps + 1;
+
+    // Try the two directions the elevator can go
+    for (const dir of DIRECTIONS) {
+      const toFloorIndex = fromFloorIndex + dir;
+
+      if (toFloorIndex === -1 || toFloorIndex === 4 || toFloorIndex < lowestNonEmptyFloor) {
+        // Don't leave the building or move objects below the lowest non-empty floor
+        continue;
+      }
+
+      // Discover all safe moves, divide them into moving one object or two objects
+      const toFloor = floors[toFloorIndex];
+      const singles = [], doubles = [];
+
+      for (let i = 0; i < fromFloor.length; i++) {
+        const id1 = fromFloor[i];
+
+        if (moveIsSafe(fromFloor, toFloor, id1)) {
+          // Object is safe to move alone
+          singles.push([id1]);
+        }
+
+        for (let j = i + 1; j < fromFloor.length; j++) {
+          const id2 = fromFloor[j];
+
+          if (moveIsSafe(fromFloor, toFloor, id1, id2)) {
+            // Both objects are safe to move together
+            doubles.push([id1, id2]);
+          }
+        }
+      }
+
+      let moves;
+
+      if (dir === 1) {
+        // Moving up; don't move one when we can move two
+        moves = doubles.length ? doubles : singles;
+      } else {
+        // Moving down; don't move two when we can move one
+        moves = singles.length ? singles : doubles;
+      }
+
+      for (const move of moves) {
+        // Compute the resulting state of this move
+        let newState = state;
+        newState = putElevator(newState, toFloorIndex);
+
+        for (const id of move) {
+          newState = putObject(newState, id, toFloorIndex);
+        }
+
+        // Normalize and enqueue this state
+        newState = normalize(newState, objectCount);
+        queue.enqueue({ state: newState, steps: newSteps });
+      }
+    }
+  } while (queue.size);
+
+  return best.get(goal);
+};
+
+/**
+ * Determines whether this move is safe.
+ *
+ * @param {number[]} fromFloor - the IDs of the objects on the floor the elevator is leaving
+ * @param {number[]} toFloor - the IDs of the objects on the floor the elevator is going to
+ * @param  {...number} toMove - the IDs of the objects being moved (should be in `fromFloor`)
+ * @returns {boolean} - `true` if the move is safe; `false` otherwise
+ */
+const moveIsSafe = (fromFloor, toFloor, ...toMove) => {
+  fromFloor = fromFloor.filter(id => !toMove.includes(id));
+  toFloor = toFloor.concat(toMove);
+  return floorIsSafe(fromFloor) && floorIsSafe(toFloor);
+};
+
+/**
+ * Determines whether having the given objects on the same floor would be safe.
+ *
+ * @param {number[]} floor - the IDs of the objects on the floor
+ * @returns {boolean} - `true` if this scenario is safe; `false` otherwise
+ */
+const floorIsSafe = floor => {
+  const unpairedMicrochips = new Set();
+  const generators = new Set();
+
+  floor.forEach(id => {
+    const pairId = getPairId(id);
+
+    if (isMicrochip(id)) {
+      if (generators.has(pairId)) {
+        return;
+      }
+
+      unpairedMicrochips.add(id);
+    } else {
+      generators.add(id);
+      unpairedMicrochips.delete(pairId);
+    }
+  });
+
+  return unpairedMicrochips.size === 0 || generators.size === 0;
 };

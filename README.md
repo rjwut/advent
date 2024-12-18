@@ -263,7 +263,6 @@ Things I'd like to improve:
 - 2019-25: Try combinations of inventory items using [Gray code](https://en.wikipedia.org/wiki/Gray_code)
 - Long runtimes:
   - 2016-14: 173.555 s
-  - 2016-11: 64.936 s
   - 2018-21: 57.588 s
   - 2018-22: 22.599 s
   - 2018-14: 15.992 s

@@ -31,14 +31,20 @@ const OPERATIONS = [
   },
 ];
 
+/**
+ * `Parser` implementation for the handheld device for Day 17.
+ */
 class DeviceParser extends DefaultParser {
   constructor() {
     super();
+    // Register the supported operations
     OPERATIONS.forEach((fn, index) => {
       const wrapper = (vm, arg) => {
         let ip = vm.ip;
         fn(vm, arg);
 
+        // If the program is still running and the instruction pointer hasn't been changed by the
+        // operation (not `jnz`), increment it by 2.
         if (vm.state === 'running' && ip === vm.ip) {
           vm.ip += 2;
         }
@@ -48,9 +54,9 @@ class DeviceParser extends DefaultParser {
   }
 
   /**
-   * Produce an `IntcodeProgram` for the given Intcode source.
+   * Produce a `DeviceProgram` for the given source code
    *
-   * @param {string} source - the Intcode source
+   * @param {string} source - the source code
    * @returns {DeviceProgram} - the parsed program
    */
   parse(source) {

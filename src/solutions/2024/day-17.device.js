@@ -14,6 +14,9 @@ const COMBO_OPERANDS = [
   },
 ];
 
+/**
+ * `Vm` implementation for the handheld device in the day 17 puzzle.
+ */
 class Device extends Vm {
   constructor() {
     super({
@@ -24,6 +27,12 @@ class Device extends Vm {
     });
   }
 
+  /**
+   * Interprets the combo operand.
+   *
+   * @param {number} arg - the operand
+   * @returns {number} - the value it represents
+   */
   combo(arg) {
     return COMBO_OPERANDS[arg](this);
   }

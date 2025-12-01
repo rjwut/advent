@@ -1,4 +1,4 @@
-const { parse, buildVm } = require('./elfcode');
+const ElfcodeVm = require('./elfcode');
 
 /**
  * # [Advent of Code 2018 Day 21](https://adventofcode.com/2018/day/21)
@@ -65,20 +65,20 @@ const { parse, buildVm } = require('./elfcode');
  * 8. The last value inserted in the `Set` before the repeated value occurs is
  *    the answer to part two.
  *
- * TODO This takes almost a minute to run on my machine. I could re-implement
- * the Elfcode program in JavaScript so that I could run it faster, but this
- * would increase the likelihood of my solution not working for other inputs.
+ * TODO This takes a long time to run on my machine. I could re-implement the
+ * Elfcode program in JavaScript so that I could run it faster, but this would
+ * increase the likelihood of my solution not working for other inputs.
  *
  * @param {string} input - the puzzle input
  * @returns {Array} - the puzzle answers
  */
 module.exports = input => {
-  const program = parse(input);
-  const vm = buildVm(program);
-  const offset = program.findIndex(
-    instruction => instruction.op === 'eqrr' && (instruction.args[0] === 0 || instruction.args[1] === 0)
+  const vm = new ElfcodeVm();
+  vm.load(input);
+  const offset = vm.program.findOffset(
+    instruction => instruction.opcode === 'eqrr' && (instruction.args[0] === 0 || instruction.args[1] === 0)
   );
-  const instruction = program[offset];
+  const instruction = vm.program.get(offset);
   const targetRegisterIndex = instruction.args[instruction.args[0] === 0 ? 1 : 0];
   const seen = new Set();
   let lastInserted, part1, part2;
@@ -86,9 +86,9 @@ module.exports = input => {
   do {
     do {
       vm.step();
-    } while (vm.regs[vm.ipReg] !== offset);
+    } while (vm.ip !== offset);
 
-    const value = vm.regs[targetRegisterIndex];
+    const value = vm.getRegister(targetRegisterIndex);
 
     if (part1 === undefined) {
       part1 = value;

@@ -132,7 +132,7 @@ const getLastDayForYear = async year => {
     const file = path.join(SOLUTIONS_DIR, String(year), moduleName + '.js');
 
     try {
-      await fsp.access(file, fs.F_OK);
+      await fsp.access(file, fs.constants.F_OK);
       return day;
     } catch {
       // do nothing
@@ -172,7 +172,7 @@ const runDay = async (year, day) => {
   const modulePath = path.join(SOLUTIONS_DIR, String(year), moduleName + '.js');
 
   try {
-    await fsp.access(modulePath, fs.F_OK)
+    await fsp.access(modulePath, fs.constants.F_OK)
   } catch (error) {
     if (error.code !== 'ENOENT') {
       throw error;

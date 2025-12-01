@@ -25,6 +25,7 @@ class Vm extends EventEmitter {
     super();
     this.#options = {
       bigint: false,
+      bindIp: undefined,
       ipIncrement: 'unchanged',
       parser: new DefaultParser(),
       registerNames: undefined,
@@ -39,9 +40,16 @@ class Vm extends EventEmitter {
     this.#ip = 0;
     this.#registers = new Map();
     this.#zero = this.#options.bigint ? 0n : 0;
-    this.#options.registerNames?.forEach(
-      name => this.#registers.set(name, this.#zero)
-    );
+
+    if (this.#options.bindIp !== undefined) {
+      if (this.#options.bigint) {
+        throw new Error('Cannot bind IP to a register in bigint mode');
+      }
+    }
+
+    this.#options.registerNames?.forEach(name => {
+      this.#registers.set(name, this.#zero);
+    });
     this.#input = [];
     this.#output = [];
     this.#state = 'ready';
@@ -114,6 +122,10 @@ class Vm extends EventEmitter {
     }
 
     this.#ip = ip;
+
+    if (this.#options.bindIp !== undefined) {
+      this.setRegister(this.#options.bindIp, ip);
+    }
   }
 
   /**
@@ -134,7 +146,18 @@ class Vm extends EventEmitter {
    * @throws {Error} - if there's no register with that name
    */
   getRegister(name) {
-    return this.#getRegisterValue(name);
+    const value = this.#registers.get(name);
+
+    if (value === undefined) {
+      if (this.#options.registerNames === undefined) {
+        this.#registers.set(name, this.#zero);
+        return this.#zero;
+      }
+
+      throw new Error(`Register does not exist: ${name}`);
+    }
+
+    return value;
   }
 
   /**
@@ -146,8 +169,13 @@ class Vm extends EventEmitter {
    * @throws {Error} - if `value` is not an integer
    */
   setRegister(name, value) {
-    this.#getRegisterValue(name); // assert that the register exists
-    this.#registers.set(name, this.#coerceValue(value));
+    this.getRegister(name); // assert that the register exists
+    value = this.#coerceValue(value);
+    this.#registers.set(name, value);
+
+    if (name === this.#options.bindIp) {
+      this.#ip = value;
+    }
   }
 
   /**
@@ -159,7 +187,7 @@ class Vm extends EventEmitter {
    * @throws {Error} - if `value` is not an integer
    */
   addRegister(name, value) {
-    const oldValue = this.#getRegisterValue(name);
+    const oldValue = this.getRegister(name);
     this.#registers.set(name, oldValue + this.#coerceValue(value));
   }
 
@@ -187,7 +215,7 @@ class Vm extends EventEmitter {
       return arg;
     }
 
-    return this.#getRegisterValue(arg);
+    return this.getRegister(arg);
   }
 
   /**
@@ -362,10 +390,10 @@ class Vm extends EventEmitter {
    * All other state remains as-is.
    */
   reset() {
-    for (let key of this.#registers.keys()) {
-      this.#registers.set(key, this.#zero);
-    }
-
+    this.#registers.clear();
+    this.#options.registerNames?.forEach(name => {
+      this.#registers.set(name, this.#zero);
+    });
     this.#ip = 0;
     this.#input = [];
     this.#output = [];
@@ -444,28 +472,6 @@ class Vm extends EventEmitter {
     if (this.#state === 'running') {
       throw new Error('Program is already running');
     }
-  }
-
-  /**
-   * Retrieves the value of the named register, or throws an `Error` if it doesn't exist.
-   *
-   * @param {string} name - the name of the register
-   * @returns {number} - the register value
-   * @throws {Error} - if the register doesn't exist
-   */
-  #getRegisterValue(name) {
-    const value = this.#registers.get(name);
-
-    if (value === undefined) {
-      if (this.#options.registerNames === undefined) {
-        this.#registers.set(name, this.#zero);
-        return this.#zero;
-      }
-
-      throw new Error(`Register does not exist: ${name}`);
-    }
-
-    return value;
   }
 }
 

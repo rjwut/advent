@@ -127,7 +127,7 @@ const run = async () => {
  * is found
  */
 const getLastDayForYear = async year => {
-  for (let day = 25; day > 0; day--) {
+  for (let day = year < 2025 ? 25 : 12; day > 0; day--) {
     const moduleName = `day-${String(day).padStart(2, '0')}`;
     const file = path.join(SOLUTIONS_DIR, String(year), moduleName + '.js');
 
@@ -149,8 +149,9 @@ const getLastDayForYear = async year => {
  */
 const runYear = async year => {
   console.log(fancyDigits(year));
+  let dayLimit = year < 2025 ? 26 : 13;
 
-  for (let day = 1; day < 26; day++) {
+  for (let day = 1; day < dayLimit; day++) {
     try {
       await runDay(year, day);
     } catch (err) {

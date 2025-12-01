@@ -11,17 +11,17 @@ const TARGET_BAG_COLOR = 'shiny gold';
  * land you in trouble. The first order of business is to parse the rule
  * Regular expressions come to the rescue again: we can parse each sentence
  * with:
- * 
+ *
  * ```js
  * /^(?<color>\S+\s\S+) bags contain (?<contents>.+)\.$/
  * ```
- * 
+ *
  * ...and each `contents` clause with:
- * 
+ *
  * ```js
  * /(?<count>\d+)\s(?<color>\S+\s\S+) bag/g
  * ```
- * 
+ *
  * So to parse the input, I `map()` each line into an object with the following
  * properties:
  *
@@ -30,7 +30,7 @@ const TARGET_BAG_COLOR = 'shiny gold';
  *   bag:
  *   - `count` (number): The number of this type of bag
  *   - `color` (string): The color of the contained bag(s)
- * 
+ *
  * Part one asks how many different color bags can eventually contain a shiny
  * gold bag, while part two asks the total number of bags contained by a shiny
  * gold bag. Attempting to brute force this would be a prohibitively expensive
@@ -38,24 +38,24 @@ const TARGET_BAG_COLOR = 'shiny gold';
  * for each bag color to determine 1) the colors of all bags eventually
  * contained by that color of bag, and 2) the number of bags you're holding
  * (directly or indirectly) when you hold a bag of that color.
- * 
+ *
  * Let's use as an example the last five lines of the sample input:
- * 
+ *
  * ```txt
  * 1. shiny gold bags contain 1 dark olive bag, 2 vibrant plum bags.
  * 2. dark olive bags contain 3 faded blue bags, 4 dotted black bags.
  * 3. vibrant plum bags contain 5 faded blue bags, 6 dotted black bags.
  * 4. faded blue bags contain no other bags.
- * 5. dotted black bags contain no other bags.`;
+ * 5. dotted black bags contain no other bags.
  * ```
- * 
+ *
  * Let's start with the innermost bags, those which contain no other bags, so I
  * put rules #4 and #5 in a queue:
- * 
+ *
  * So first I process rule #4. Since nothing is inside it, it contains no other
  * colors of bags, and when you're holding a faded blue bag, you're only
  * holding one bag. So the precomputed results for faded blue bags are:
- * 
+ *
  * ```txt
  * {
  *   'faded blue': {
@@ -64,15 +64,15 @@ const TARGET_BAG_COLOR = 'shiny gold';
  *   },
  * }
  * ```
- * 
+ *
  * Each time we finish computing a rule, we check to see if there are any rules
  * we haven't precomputed yet but whose contents are now all precomputed. There
  * are no rules which describe bags that only contain faded blue bags, so we
  * add nothing to the queue yet.
- * 
+ *
  * Now we take rule #5 off the queue and process it. Our precomputed results
  * now look like this:
- * 
+ *
  * ```txt
  * {
  *   'dotted black': {
@@ -85,14 +85,14 @@ const TARGET_BAG_COLOR = 'shiny gold';
  *   },
  * }
  * ```
- * 
+ *
  * We now have the information we need to do the computations for rules #2 and
  * #3, so we add them to queue. When we process a bag, the `colors` `Set` will
  * contain the colors of the directly contained bags, plus the colors in their
  * `colors` `Set`s; and the `bags` property will be set to the sum of the
  * `bags` properties of the directly contained bags plus 1. After they're
  * processed, our precomputed results look like this:
- * 
+ *
  * ```txt
  * {
  *   'dark olive': {
@@ -113,11 +113,11 @@ const TARGET_BAG_COLOR = 'shiny gold';
  *   },
  * }
  * ```
- * 
+ *
  * We finally have the information we need to compute for shiny gold bags, so
  * rule #1 goes on the queue. It's the only thing on the queue, so it gets
  * immediately processed:
- * 
+ *
  * ```txt
  * {
  *   'dark olive': {
@@ -142,7 +142,7 @@ const TARGET_BAG_COLOR = 'shiny gold';
  *   },
  * }
  * ```
- * 
+ *
  * Once this processing has happened for all the rules in our input, solving
  * the two parts of the puzzle becomes trivial. For part one, we simply count
  * how many entries in our precomputed results contains 'shiny gold' in the
@@ -174,7 +174,7 @@ module.exports = input => {
  * ```txt
  * {count} {color} bag[s]
  * ```
- * 
+ *
  * These rules are parsed, and an array describing the rules is returned. Each
  * array entry is an object representing a single rule, with `color` declaring
  * the color of bag described by the rule, and `contents` being an array of
@@ -236,8 +236,8 @@ const computeContents = rules => {
  * - All contained bag colors declared by that rule have result entries.
  *
  * @param {Array} queue - the queue to populate
- * @param {Array} rules - the rules 
- * @param {Object} results - the results object 
+ * @param {Array} rules - the rules
+ * @param {Object} results - the results object
  */
 const pushToQueue = (queue, rules, results) => {
   rules.filter(rule => {
@@ -271,4 +271,3 @@ const howManyCanEventuallyContain = (results, color) => Object.values(results)
  * @returns {number} - number of bags contained by a bag of that color
  */
  const totalContained = (results, color) => results[color].count - 1;
- 

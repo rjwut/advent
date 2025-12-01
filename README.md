@@ -152,7 +152,7 @@ npm run 2024-15
 
 When I begin a puzzle day, I execute `npm run generate {year} {day}` to build the skeleton files:
 
-- **Solution module:** This module file is named `src/solutions/{year}/day-{day}.js`. It exports a function that accepts the test input string and returns an array with two elements: the answer to each part of that day's puzzle. When the solution module code is first generated, it simply returns `[ undefined, undefined ]`. (Often some or all of the work done to solve part one is useful in part two, so this approach allows me to capitalize on that.) My solution will replace the `undefined` values with the actual answers. (Day 25 only has one part, so the second element will always be `undefined` for that day.)
+- **Solution module:** This module file is named `src/solutions/{year}/day-{day}.js`. It exports a function that accepts the test input string and returns an array with two elements: the answer to each part of that day's puzzle. When the solution module code is first generated, it simply returns `[ undefined, undefined ]`. (Often some or all of the work done to solve part one is useful in part two, so this approach allows me to capitalize on that.) My solution will replace the `undefined` values with the actual answers. (The last day only has one part, so the second element will always be `undefined` for that day.)
 - **Test module:** This module file is named `src/solutions/{year}/day-{day}-test.js`. It allows me to run test input through my solution to see if it produces the expected answers for each part.
 
 ## Workflow for Developing a Puzzle Solution

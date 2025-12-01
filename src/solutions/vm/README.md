@@ -46,13 +46,15 @@ console.log(vm.getRegister('a'));
 
 The `Vm` constructor accepts one optional argument: an options object. The following properties are supported:
 
+- `bindIp: string`: If this option is specified, the named register will be bound to the instruction
+  pointer; a change to one will update the other. Since the instruction pointer is a `number` and not a `bigint`, an `Error` will be thrown if this option is specified when the `bigint` option is `true`.
 - `bigint: boolean`: By default, the `Vm`'s input, output, and registers use `number` types. To use `bigint`s instead, set this option to `true`.
 - `ipIncrement: string`: Sets the policy that controls when the `Vm` automatically increments the instruction pointer after executing an instruction:
   - `'never'`: The instruction pointer will only move if explicitly changed by an instruction or an event listener.
   - `'unchanged'` (default): The instruction pointer will move only if it hasn't been changed by the instruction or an event listener.
   - `'always'`: The instruction pointer will always be incremented, even if it has been changed.
 - `parser: Parser`: The parser instance to use. If not provided, a new instance of `DefaultParser` will be used.
-- `registerNames: Array<string>`: An array of register names to declare. If this option is specified, any attempt to read or write a register not declared in this list will result in an error. If this option is not specified, registers will be automatically provisioned (initialized to `0`) as needed.
+- `registerNames: Array<any>`: An array of register names to declare. If this option is specified, any attempt to read or write a register not declared in this list will result in an error. If this option is not specified, registers will be automatically provisioned (initialized to `0`) as needed.
 - `throwUnheardErrors: boolean`: The `Vm` will emit an `error` event if an error occurs. If no listener is registered for this event, the `Vm` will throw the error instead by default. Set this to `false` to prevent errors from being thrown. Note that the most recent error is always available from the `Vm`'s  read-only `error` property.
 
 ## Registers

@@ -9,7 +9,7 @@
  * Parsing is straightforward: split the input on commas to get range strings, split those on dashes
  * to get min and max values, and convert those to numbers.
  *
- * For any given ID of at least two digits, the possible subsequences lengths are 1 through half the
+ * For any given ID of at least two digits, the possible subsequence lengths are 1 through half the
  * length of the ID (rounded down). For each possible length, we extract the initial subsequence of
  * that length, then generate a regular expression that matches the entire ID if it consists only of
  * at least two repetitions of that subsequence. If the ID matches, it is invalid (at least for part

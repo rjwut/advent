@@ -10,11 +10,10 @@
  * to get min and max values, and convert those to numbers.
  *
  * For any given ID of at least two digits, the possible subsequence lengths are 1 through half the
- * length of the ID (rounded down). For each possible length, we extract the initial subsequence of
- * that length, then generate a regular expression that matches the entire ID if it consists only of
- * at least two repetitions of that subsequence. If the ID matches, it is invalid (at least for part
- * two). For example, if the subsequence we were testing were "123", the regular expression would be
- * `/^(?:123){2,}$/`.
+ * length of the ID (rounded down). For each possible length, we first confirm whether that length
+ * divides evenly into the length of the ID, skipping it if not. Otherwise, we produce a string that
+ * is the subsequence repeated to match the ID's length, then compare that to the ID. If they match,
+ * the ID is invalid.
  *
  * I wrote a `computeRepetitions()` function that implements this, and if an ID is found to be
  * invalid, it returns the number of repetitions of the subsequence that caused the match. Since we
@@ -76,13 +75,17 @@ const computeRepetitions = id => {
   const maxLength = Math.floor(id.length / 2);
 
   for (let length = maxLength; length > 0; length--) {
-    const sequence = id.substring(0, length);
-    const regexp = new RegExp(`^(?:${sequence}){2,}$`);
+    if (id.length % length !== 0) {
+      continue;
+    }
 
-    if (regexp.test(id)) {
-      return id.length / length;
+    const repetitions = id.length / length;
+    const sequence = id.substring(0, length);
+
+    if (id === sequence.repeat(repetitions)) {
+      return repetitions;
     }
   }
 
   return 0;
-}
+};

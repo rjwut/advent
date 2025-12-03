@@ -4,7 +4,7 @@
 
 **Automation problems? I'll fix it.**
 
-- 👀 [Inspect relevant code](https://github.com/rjwut/advent/blob/main/src/framework/fetch-input.js)
+- 👀 [Inspect relevant code](https://github.com/rjwut/advent/blob/main/src/framework/aoc-api.js)
 - 📧 [Contact me](https://github.com/rjwut/advent/issues/new)
 
 The `User-Agent` header is formatted as follows:

@@ -4,7 +4,7 @@ const fsp = fs.promises;
 const path = require('path');
 const MASTHEAD = require('./masthead');
 const fancyDigits = require('./fancy-digits');
-const fetchInput = require('./fetch-input');
+const AocApi = require('./aoc-api');
 const ansi = require('./ansi');
 
 const FIRST_AOC_YEAR = 2015;
@@ -17,6 +17,8 @@ const YELLOW = ansi(ansi.FG_YELLOW, ansi.BOLD);
 const GRAY = ansi(ansi.FG_BLACK, ansi.BOLD);
 const LONG_RUNTIME_MS = 5_000;
 const VERY_LONG_RUNTIME_MS = 15_000;
+
+const aocApi = new AocApi();
 
 /**
  * Prints out an error message and exits the process.
@@ -181,7 +183,7 @@ const runDay = async (year, day) => {
     return;
   }
 
-  const input = await fetchInput(year, day);
+  const input = await aocApi.fetchInput(year, day);
   const dayModule = require(`../solutions/${year}/${moduleName}`);
   process.stdout.write(`Day ${YELLOW}${day.padStart(2, ' ')}${RESET}`);
   const start = performance.now();

@@ -7,17 +7,20 @@
 - 👀 [Inspect relevant code](https://github.com/rjwut/advent/blob/main/src/framework/fetch-input.js)
 - 📧 [Contact me](https://github.com/rjwut/advent/issues/new)
 
-`User-Agent` header:
+The `User-Agent` header is formatted as follows:
 
 ```txt
-github.com/rjwut/advent 2022-12-08; contact @ https://github.com/rjwut/advent/issues/new
+github.com/rjwut/advent {version}; contact @ {contact}
 ```
+
+- `version`: A string identifying the version of this code; currently, this is the date of the latest commit against the HTTP fetch code in `yyyy-mm-dd` format.
+- `contact`: The contact information provided by the user.
 
 The code in this repository follows the [automation guidelines on the /r/adventofcode community wiki](https://www.reddit.com/r/adventofcode/wiki/faqs/automation/).
 
 - **Only inputs requested:** The only requests this code makes against adventofcode.com is to download puzzle input.
-- **Requests are throttled:** Requests are made no more frequently than once per minute.
-- **Inputs are cached:** Inputs are locally cached so that any given input is only requested once. If the user wishes to download an input again, the must delete the relevant cache file.
+- **Requests are throttled:** Requests are made no more frequently than once every five minutes.
+- **Inputs are cached:** Inputs are locally cached so that any given input is only requested once. If the user wishes to download an input again, they must delete the relevant cache file.
 
 ## Introduction
 
@@ -33,19 +36,23 @@ After cloning the repository, install dependencies with:
 npm install
 ```
 
-To enable automatic input download, run:
+To enable automatic input download, you need to set up your session as follows:
 
 ```bash
-npm run session {session-cookie}
+npm run session {sessionId} [{contact}]
 ```
 
-...where `session-cookie` is the value of your `session` cookie from the Advent of Code web site. If your session cookie changes, you will need to run the command again.
+- `sessionId`: The value of your `session` cookie from the Advent of Code web site. If your session cookie changes, you will need to run the command again.
+- `contact`: A point of contact for you to allow Advent of Code to reach you in case there is a problem with the automation. This could be, for example, your email address, Reddit username, or a GitHub issue URL. This is required the first time you run the command. Afterward, you can omit it if it hasn't changed.
 
-Your session cookie is never transmitted to any location except the Advent of Code web site in order to download your puzzle input. You can confirm this with an inspection of the code. If you're still uncomfortable with providing your session cookie, you can instead provide puzzle input manually. Simply create a file named `input/{year}/{day}.txt` (padding the day with a leading `0` if it's only one digit), and paste your puzzle input into the file.
+This information is sent in request headers when downloading your puzzle input to authenticate you and provide contact information to Advent of Code in case they want to contact you about a problem with your use of automation. This information is only stored locally and is only transmitted to the Advent of Code site. You can confirm this with an inspection of the code. If you're still uncomfortable with providing this information, you can instead provide puzzle input manually. Simply create a file named `input/{year}/{day}.txt` (padding the day with a leading `0` if it's only one digit), and paste your puzzle input into the file.
 
 ## Usage
 
-The `npm start` script runs solutions. You can specify the year and day of the solution to run. If the year is omitted, the most recent year that has a directory under `src/solutions` is assumed. If the day is omitted, the most recent day for which a solution module exists in that year folder is assumed. An asterisk (`*`) in place of a year or day means "all". Note when running multiple solutions that input download is heavily throttled, so execution will be slow if the cache does not already contain the input.
+The `npm start` script runs solutions. You can specify the year and day of the solution to run. If the year is omitted, the most recent year that has a directory under `src/solutions` is assumed. If the day is omitted, the most recent day for which a solution module exists in that year folder is assumed. An asterisk (`*`) in place of a year or day means "all".
+
+> [!NOTE]
+> Use of the asterisk to run multiple solutions is intended to allow you to rapidly run the solutions with cached input. While it will work for downloading multiple inputs, it will be throttled to one request every five minutes to comply with Advent of Code's automation guidelines.
 
 Run the most recent solution:
 

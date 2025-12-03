@@ -23,7 +23,7 @@ const REGEXES = [ /^(\d+)\1$/, /^(\d+)\1+$/ ];
  * as many times as needed to consume the entire string, as long as there are at least two
  * repetitions.
  *
- * For each part of the puzzle, we iterate over all the avlues in all the ranges and test them
+ * For each part of the puzzle, we iterate over all the values in all the ranges and test them
  * against the appropriate regular expression for that part. If the ID matches, it's invalid, and we
  * add it to the sum for that part. After iterating all values, the sum is the answer for that part.
  *

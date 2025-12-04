@@ -1,35 +1,13 @@
 // Bypass the parser, just feed the droid the actual event objects
 jest.mock('./day-25.parser', () => arg => arg);
 
-/*
- * Normally, we'd want to not use the real inventory and map modules, but since
- * the interactions are complicated and they already have separate tests, we'll
- * use the real ones and make assertions against their states. We need the
- * instances to be test-scoped: return the same instance no matter how many
- * times it is requested in a test, but a new instance for each test.
- */
-jest.mock('./day-25.inventory', () => { // singleton for each test
-  const instance = jest.requireActual('./day-25.inventory')();
-  return () => instance;
-});
-jest.mock('./day-25.map', () => { // singleton for each test
-  const instance = jest.requireActual('./day-25.map')();
-  return () => instance;
-});
+const Droid = require('./day-25.droid');
 
 describe('2019 Day 25 - droid', () => {
-  let buildDroid, buildInventory, buildMap;
-  let droid, inventory, map;
+  let droid;
 
   beforeEach(() => {
-    jest.isolateModules(() => { // ensure state doesn't leak between tests
-      buildDroid = require('./day-25.droid');
-      buildInventory = require('./day-25.inventory');
-      buildMap = require('./day-25.map');
-    });
-    droid = buildDroid();
-    inventory = buildInventory();
-    map = buildMap();
+    droid = new Droid();
   });
 
   test('We just started; it should map the room and pick a direction to go', () => {
@@ -40,10 +18,13 @@ describe('2019 Day 25 - droid', () => {
       { type: 'prompt' },
     ]);
     expect(exits.includes(command)).toBe(true);
-    expect(map.get('Hull Breach')).toEqual({
-      name: 'Hull Breach',
-      exits: { north: null, south: null, west: null },
-    });
+    const hullBreach = droid.map.get('Hull Breach');
+    expect(hullBreach.name).toBe('Hull Breach');
+    expect([ ...hullBreach ]).toEqual([
+      [ 'north', null ],
+      [ 'south', null ],
+      [ 'west', null ],
+    ]);
   });
 
   test('Test phases one and two', () => {
@@ -65,21 +46,21 @@ describe('2019 Day 25 - droid', () => {
      * 5. Ignore unknown exit and move back to the security checkpoint.
      */
     const hullBreachExits = [ 'north', 'south' ];
-    const hullBreach = [
+    const hullBreachEvents = [
       { type: 'roomEntered', arg: 'Hull Breach' },
       { type: 'exitsListed', arg: hullBreachExits.map(dir => '- ' + dir).join('\n') },
       { type: 'prompt' },
     ];
-    const securityCheckpointDir = droid.consume(hullBreach);
+    const securityCheckpointDir = droid.consume(hullBreachEvents);
     expect(hullBreachExits.includes(securityCheckpointDir)).toBe(true);
     const opposite = hullBreachExits.indexOf(securityCheckpointDir) === 0 ? 'south' : 'north';
-    const securityCheckpoint = [
+    const securityCheckpointEvents = [
       { type: 'roomEntered', arg: 'Security Checkpoint' },
       { type: 'exitsListed', arg: '- ' + opposite },
       { type: 'prompt' },
     ];
-    expect(droid.consume(securityCheckpoint)).toBe(opposite);
-    expect(droid.consume(hullBreach)).toBe(opposite);
+    expect(droid.consume(securityCheckpointEvents)).toBe(opposite);
+    expect(droid.consume(hullBreachEvents)).toBe(opposite);
     const items = [];
 
     for (let i = 0; i < 8; i++) {
@@ -98,12 +79,12 @@ describe('2019 Day 25 - droid', () => {
       nextEvents = [
         { type: 'itemTaken', arg: `item${i}` },
         { type: 'prompt' },
-      ]; 
+      ];
     }
 
     // Phase two: Move to security checkpoint
     expect(droid.consume(nextEvents)).toBe(securityCheckpointDir);
-    expect(droid.consume(hullBreach)).toBe(securityCheckpointDir);
+    expect(droid.consume(hullBreachEvents)).toBe(securityCheckpointDir);
   });
 
   test('Test phase three', () => {
@@ -122,7 +103,7 @@ describe('2019 Day 25 - droid', () => {
      * 2. Attempt to move to the pressure-sensitive floor; get rejected.
      * 3. Continue dropping and picking up combinations of items until they try
      *    entering holding items 0, 4, and 7.
-     * 4. No command is given after enter with those items.
+     * 4. No command is given after entering with those items.
      */
     const itemsOnFloor = [];
 
@@ -191,7 +172,7 @@ describe('2019 Day 25 - droid', () => {
 
       if (!command) {
         // No command given; we should have the code now
-        expect(droid.getCode()).toBe('0123456789');
+        expect(droid.code).toBe('0123456789');
         break;
       }
 
@@ -215,7 +196,7 @@ describe('2019 Day 25 - droid', () => {
         ];
       } else {
         // Droid is trying to pass security
-        const itemsHeld = inventory.toArray().sort().join();
+        const itemsHeld = droid.inventory.toArray().sort().join();
 
         if (itemsHeld === 'item0,item4,item7') {
           // Droid has found the correct combination of items; give the code

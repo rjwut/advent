@@ -1,17 +1,17 @@
-const buildInventory = require('./day-25.inventory');
+const Inventory = require('./day-25.inventory');
 
 const UNSAFE_ITEMS = [
   'escape pod',
   'giant electromagnet',
   'infinite loop',
   'molten lava',
-  'photons', 
+  'photons',
 ];
 
 let inventory;
 
 beforeEach(() => {
-  inventory = buildInventory();
+  inventory = new Inventory();
 });
 
 describe('2019 Day 25 - inventory', () => {
@@ -60,43 +60,33 @@ describe('2019 Day 25 - inventory', () => {
     describe('Having discovered all safe items', () => {
       beforeEach(() => {
         for (let i = 0; i < 8; i++) {
-          inventory.take(`item ${i}`);
+          inventory.take(`item${i}`);
         }
       });
-  
+
       test('Can produce commands for permutations', () => {
-        expect(inventory.permutation(0)).toEqual([
-          'drop item 0',
-          'drop item 1',
-          'drop item 2',
-          'drop item 3',
-          'drop item 4',
-          'drop item 5',
-          'drop item 6',
-          'drop item 7',
-        ]);
-        inventory.drop('item 2');
-        inventory.drop('item 3');
-        inventory.drop('item 7');
-        expect(inventory.permutation(0)).toEqual([
-          'drop item 0',
-          'drop item 1',
-          'drop item 4',
-          'drop item 5',
-          'drop item 6',
-        ]);
-        inventory.drop('item 0');
-        inventory.drop('item 1');
-        inventory.drop('item 4');
-        inventory.drop('item 5');
-        inventory.drop('item 6');
-        expect(inventory.permutation(0)).toHaveLength(0);
-        inventory.take('item 3');
-        expect(inventory.permutation(3)).toEqual([
-          'drop item 3',
-          'take item 6',
-          'take item 7',
-        ]);
+        expect(inventory.permutation(0)).toBeNull();
+        expect(inventory.permutation(1)).toBe('drop item0');
+        expect(inventory.permutation(2)).toBe('drop item2');
+        expect(inventory.permutation(3)).toBe('take item0');
+      });
+
+      test('Running the full set of permutations does not cause any errors', () => {
+        for (let i = 0; i < 256; i++) {
+          expect(() => {
+            const command = inventory.permutation(i);
+
+            if (command) {
+              const [ action, item ] = command.split(' ');
+
+              if (action === 'take') {
+                inventory.take(item);
+              } else {
+                inventory.drop(item);
+              }
+            }
+          }).not.toThrow();
+        }
       });
 
       test('Permutation out of range throws', () => {

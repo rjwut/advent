@@ -1,19 +1,21 @@
-const buildMap = require('./day-25.map');
+const ShipMap = require('./day-25.map');
 
 let map;
 
 beforeEach(() => {
-  map = buildMap();
+  map = new ShipMap();
 });
 
 describe('2019 Day 25 - map', () => {
   describe('enteredRoom()', () => {
     test('Create first room', () => {
       const room = map.enteredRoom('Hull Breach', [ 'north', 'east', 'south' ]);
-      expect(room).toEqual({
-        name: 'Hull Breach',
-        exits: { north: null, east: null, south: null },
-      });
+      expect(room.name).toBe('Hull Breach');
+      expect([ ...room ]).toEqual([
+        [ 'north', null ],
+        [ 'east', null ],
+        [ 'south', null ],
+      ]);
     });
 
     test('Create connections', () => {
@@ -24,8 +26,8 @@ describe('2019 Day 25 - map', () => {
         'Hull Breach',
         'east',
       );
-      expect(hullBreach.exits.east).toBe(engineering);
-      expect(engineering.exits.west).toBe(hullBreach);
+      expect(hullBreach.getExit('east')).toBe(engineering);
+      expect(engineering.getExit('west')).toBe(hullBreach);
     });
 
     test('Previous room must exist', () => {
@@ -44,7 +46,7 @@ describe('2019 Day 25 - map', () => {
         [ 'north', 'east', 'west' ],
         'Hull Breach',
         'west',
-      )).toThrow('Hull Breach does not have an exit to west');
+      )).toThrow('Hull Breach has no exit to the west');
     });
 
     test('New room must have an exit in the correct direction', () => {
@@ -54,7 +56,7 @@ describe('2019 Day 25 - map', () => {
         [ 'north', 'east', 'south' ],
         'Hull Breach',
         'east',
-      )).toThrow('Engineering does not have an exit to west');
+      )).toThrow('Engineering has no exit to the west');
     });
   });
 
@@ -64,11 +66,8 @@ describe('2019 Day 25 - map', () => {
     });
 
     test('Return known room', () => {
-      map.enteredRoom('Hull Breach', [ 'north', 'east', 'south' ]);
-      expect(map.get('Hull Breach')).toEqual({
-        name: 'Hull Breach',
-        exits: { north: null, east: null, south: null },
-      });
+      const hullBreach = map.enteredRoom('Hull Breach', [ 'north', 'east', 'south' ]);
+      expect(map.get('Hull Breach')).toBe(hullBreach);
     });
   });
 
@@ -82,7 +81,7 @@ describe('2019 Day 25 - map', () => {
     });
 
     const hasUnknownExits = room => {
-      return Object.values(room.exits).some(exit => exit === null);
+      return room[Symbol.iterator]().some(([ , otherRoom ]) => otherRoom === null);
     };
 
     const roomNamed = name => room => room.name === name;

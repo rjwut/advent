@@ -1,4 +1,4 @@
-const { createHash } = require('crypto');
+const crypto = require('crypto');
 
 /**
  * # [Advent of Code 2015 Day 4](https://adventofcode.com/2015/day/4)
@@ -15,12 +15,10 @@ module.exports = input => {
   input = input.trim();
   const prefixes = [ '00000', '000000' ];
   const answers = [ undefined, undefined ];
-  let i = 0, hash;
+  let i = 0;
 
   do {
-    hash = createHash('md5')
-      .update(`${input}${++i}`)
-      .digest('hex');
+    const hash = crypto.hash('md5', `${input}${++i}`);
     prefixes.forEach((prefix, j) => {
       if (answers[j] === undefined && hash.startsWith(prefix)) {
         answers[j] = i;

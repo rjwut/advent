@@ -119,11 +119,7 @@ const parse = input => {
    *
    * @returns {string} - the hash
    */
-  const computeHash = () => {
-    const hashBuilder = crypto.createHash('md5');
-    hashBuilder.update(acres.join('\n'));
-    return hashBuilder.digest('base64');
-  };
+  const computeHash = () => crypto.hash('md5', acres.join('\n'), 'base64');
 
   /**
    * Returns the current resource value.
@@ -159,16 +155,16 @@ const parse = input => {
           computeNewState(r, c);
         }
       }
-  
+
       acres = next;
       const hash = computeHash();
-  
+
       if (seen.has(hash)) {
         cycleStart = seen.get(hash);
         cycleLength = resourceValues.length - cycleStart;
         break;
       }
-  
+
       seen.set(hash, resourceValues.length);
       resourceValues.push(computeResourceValue());
     } while (true);

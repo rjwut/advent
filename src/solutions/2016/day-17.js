@@ -24,9 +24,7 @@ module.exports = input => {
 
   do {
     const { path, x, y } = queue.shift();
-    const hashAlgo = crypto.createHash('md5');
-    hashAlgo.update(input + path);
-    const hash = hashAlgo.digest('hex');
+    const hash = crypto.hash('md5', input + path);
 
     for (let i = 0; i < 4; i++) {
       const chr = hash[i];

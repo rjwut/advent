@@ -1,4 +1,4 @@
-const { createHash } = require('crypto');
+const crypto = require('crypto');
 
 const PASSWORD_LENGTH = 8;
 const HASH_PREFIX = '00000';
@@ -24,9 +24,7 @@ module.exports = input => {
   let i = 0, password2CharsFound = 0, hash;
 
   do {
-    const md5 = createHash('md5');
-    md5.update(input + i++, 'ascii');
-    hash = md5.digest('hex');
+    hash = crypto.hash('md5', input + i++);
 
     if (!hash.startsWith(HASH_PREFIX)) {
       continue;

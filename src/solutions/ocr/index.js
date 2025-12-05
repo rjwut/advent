@@ -152,9 +152,9 @@ const hashLines = (lines, pixelChar, maxWidth) => {
    * MD5 because it's fast and cryptographic strength is not a concern here.
    */
   const hashGlyph = () => {
-    const hash = crypto.createHash('md5');
-    hash.update(columns.join('\n'));
-    hashes.push(hash.digest('base64'));
+    hashes.push(
+      crypto.hash('md5', columns.join('\n'), 'base64')
+    );
     hashes.maxWidth = Math.max(hashes.maxWidth, columns.length);
     columns = [];
   };

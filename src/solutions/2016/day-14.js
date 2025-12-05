@@ -6,13 +6,13 @@ const REGEXP = /(.)\1{2,}/;
  * # [Advent of Code 2016 Day 14](https://adventofcode.com/2016/day/14)
  *
  * After having a slower implementation for quite some time, I eventually revisited this solution
- * and improved it. It's still slower than I'd like (about 33 seconds on my machine), but a cursory
+ * and improved it. It's still slower than I'd like (about 15 seconds on my machine), but a cursory
  * Google search indicates that MD5 hashing in Node
  * [is known to be slow](https://stackoverflow.com/questions/28845659/expected-performance-of-md5-calculation-in-javascript).
  * It may be possible to compensate for this by resorting to worker threads, but I'm adequately
  * convinced that my implementation would be fast if the performance of Node's MD5 implementation
  * were on par with that of other languages. As it is, the performance of my solution has been
- * improved by more than 5×, so I'm content to leave it as is.
+ * improved by more than 10×, so I'm content to leave it as is.
  *
  * There are several things that can trip you up with this puzzle:
  *
@@ -99,9 +99,7 @@ const findKeys = (salt, stretch) => {
     let hash = salt + ++index;
 
     for (let i = 0; i < stretch; i++) {
-      hash = crypto.createHash('md5')
-        .update(hash)
-        .digest('hex');
+      hash = crypto.hash('md5', hash);
     }
 
     // Check for a triplet

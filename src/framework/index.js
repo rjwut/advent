@@ -152,14 +152,17 @@ const getLastDayForYear = async year => {
 const runYear = async year => {
   console.log(fancyDigits(year));
   let dayLimit = year < 2025 ? 26 : 13;
+  let ms = 0;
 
   for (let day = 1; day < dayLimit; day++) {
     try {
-      await runDay(year, day);
+      ms += await runDay(year, day);
     } catch (err) {
       fail(err.stack);
     }
   }
+
+  process.stdout.write(`Total elapsed time for ${year}: ${renderTime(ms)}\n`);
 };
 
 /**
@@ -167,6 +170,7 @@ const runYear = async year => {
  *
  * @param {string} year - the year to run
  * @param {number} day - the day to run
+ * @returns {Promise<number>} - resolves to the elapsed time while executing the solution
  */
 const runDay = async (year, day) => {
   day = String(day)
@@ -189,26 +193,38 @@ const runDay = async (year, day) => {
   const start = performance.now();
   const answers = await dayModule(input);
   const elapsedMs = performance.now() - start;
-  let elapsedStr, elapsedColor = GRAY;
+  process.stdout.write(`, part ${YELLOW}1${RESET}: ${GREEN}${answers[0]}${RESET}\n`);
+  process.stdout.write(`        part ${YELLOW}2${RESET}: ${GREEN}${answers[1]}${RESET}\n`);
+  process.stdout.write(`                ${renderTime(elapsedMs, true)}\n`);
+  return elapsedMs;
+}
 
-  if (elapsedMs < 1000) {
+/**
+ * Renders elapsed time with appropriate formatting.
+ *
+ * @param {number} ms - elapsed time in milliseconds
+ * @param {boolean} color - whether to color the output
+ * @returns {string} - formatted elapsed time string
+ */
+const renderTime = (ms, color) => {
+  let str, elapsedColor = GRAY;
+
+  if (ms < 1000) {
     // Less than a second; render elapsed time in microseconds
-    elapsedStr = Math.round(elapsedMs * 1000).toLocaleString() + ' μs';
+    str = Math.round(ms * 1000).toLocaleString() + ' μs';
   } else {
     // Render elapsed time in seconds, yellow if more than 5 and red if more than 15
-    elapsedStr = (elapsedMs / 1000).toLocaleString(undefined, {
+    str = (ms / 1000).toLocaleString(undefined, {
       minimumFractionDigits: 3,
       maximumFractionDigits: 3,
     }) + ' s';
 
-    if (elapsedMs >= LONG_RUNTIME_MS) {
-      elapsedColor = elapsedMs < VERY_LONG_RUNTIME_MS ? YELLOW : RED;
+    if (ms >= LONG_RUNTIME_MS) {
+      elapsedColor = ms < VERY_LONG_RUNTIME_MS ? YELLOW : RED;
     }
   }
 
-  process.stdout.write(`, part ${YELLOW}1${RESET}: ${GREEN}${answers[0]}${RESET}\n`);
-  process.stdout.write(`        part ${YELLOW}2${RESET}: ${GREEN}${answers[1]}${RESET}\n`);
-  process.stdout.write(`                ${elapsedColor}${elapsedStr}${RESET}\n`);
+  return color ? `${elapsedColor}${str}${RESET}` : str;
 }
 
 run();

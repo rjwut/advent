@@ -212,7 +212,14 @@ class PipeGrid extends SimpleGrid {
   #detectStartPipe() {
     let { r, c } = this.coordsOf('S');
     const connections = Directions.reduce((connections, direction) => {
-      const adjacent = this.get(r + direction.r, c + direction.c);
+      const rAdj = r + direction.r;
+      const cAdj = c + direction.c;
+
+      if (!this.inBounds(rAdj, cAdj)) {
+        return connections;
+      }
+
+      const adjacent = this.get(rAdj, cAdj);
       const adjacentDirections = Pipes[adjacent];
 
       if (!adjacentDirections)  {

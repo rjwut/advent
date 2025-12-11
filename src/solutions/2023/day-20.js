@@ -239,7 +239,7 @@ class System {
     this.#modules.set('button', this.#button);
 
     // Get a reference to the gatekeeper
-    this.#gatekeeper = this.#modules.get(ACTIVATION_MODULE).gatekeeper;
+    this.#gatekeeper = this.#modules.get(ACTIVATION_MODULE)?.gatekeeper;
   }
 
   /**

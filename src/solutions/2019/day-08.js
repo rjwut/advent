@@ -32,13 +32,10 @@ module.exports = async (input, part, width = DEFAULT_WIDTH, height = DEFAULT_HEI
   const data = parse(input, width, height);
 
   if (part !== undefined) {
-    return await PARTS[part - 1](data, true);
+    return PARTS[part - 1](data, true);
   }
 
-  return [
-    part1(data),
-    await part2(data),
-  ];
+  return [ part1(data), await part2(data) ];
 };
 
 /**
@@ -103,7 +100,7 @@ const part1 = data => {
  * Solves part two of the puzzle.
  *
  * @param {Object} data - the parsed data
- * @returns {string} - the answer for part two
+ * @returns {string} - the grid displaying the answer for part two
  */
  const part2 = async (data, debug) => {
   const composite = grid(data.width, data.height);
@@ -123,7 +120,7 @@ const part1 = data => {
     return glyphs;
   }
 
-  return await ocr(glyphs);
+  return ocr(glyphs);
 };
 
 const PARTS = [ part1, part2 ];

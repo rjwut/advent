@@ -14,5 +14,5 @@ p=2,4 v=2,-3
 p=9,5 v=-3,-3`;
 
 test('Day 14', () => {
-  expect(solver(EXAMPLE, 11, 7)).toEqual([ 12, undefined ]);
+  expect(solver(EXAMPLE, 11, 7)).toEqual(12);
 });

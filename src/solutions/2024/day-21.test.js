@@ -7,5 +7,5 @@ const EXAMPLE = `029A
 379A`;
 
 test('Day 21', () => {
-  expect(solver(EXAMPLE)).toEqual([ 126384, undefined ]);
+  expect(solver(EXAMPLE)).toEqual([ 126384, 154115708116294 ]);
 });

@@ -10,7 +10,6 @@ const DIRECTIONS = [
   [  1,  0 ],
   [ -1,  0 ],
 ];
-const GOAL = [ 70, 70 ];
 
 /**
  * # [Advent of Code 2024 Day 18](https://adventofcode.com/2024/day/18)
@@ -41,7 +40,9 @@ const GOAL = [ 70, 70 ];
  * @param {string} input - the puzzle input
  * @returns {Array} - the puzzle answers
  */
-module.exports = input => {
+module.exports = (input, size = 71, part1Bytes = 1024) => {
+  const goal = [ size - 1, size - 1 ];
+
   /**
    * Produces the edges from the given node for use by A*.
    *
@@ -49,7 +50,7 @@ module.exports = input => {
    * @returns {Object[]} - the edges from the given node
    */
   const getEdges = node => {
-    const [r, c] = node.split(',').map(Number);
+    const [ r, c ] = node.split(',').map(Number);
     const edges = [];
     DIRECTIONS.forEach(([dr, dc]) => {
       const nr = r + dr;
@@ -74,16 +75,16 @@ module.exports = input => {
    */
   const heuristic = node => manhattanDistance(
     node.split(',').map(Number),
-    GOAL
+    goal
   );
 
   // Parse the input and set up the grid
   const bytes = match(input, BYTE_REGEXP, { r: Number, c: Number });
-  const grid = new SimpleGrid({ rows: 71, cols: 71, fill: '.' });
+  const grid = new SimpleGrid({ rows: size, cols: size, fill: '.' });
   let i = 0, cost, lastByte;
 
-  // Drop the first 1024 bytes
-  for (; i < 1024; i++) {
+  // Drop all the bytes for part 1
+  for (; i < part1Bytes; i++) {
     const byte = bytes[i];
     grid.set(byte.r, byte.c, '#');
   }
@@ -91,7 +92,7 @@ module.exports = input => {
   // Compute the answer to part one: the length of the shortest path after 1024 bytes have dropped.
   const part1 = aStar(
     '0,0',
-    GOAL.join(','),
+    goal.join(','),
     getEdges,
     heuristic
   ).cost;
@@ -102,7 +103,7 @@ module.exports = input => {
     grid.set(lastByte.r, lastByte.c, '#');
     cost = aStar(
       '0,0',
-      GOAL.join(','),
+      goal.join(','),
       getEdges,
       heuristic
     )?.cost;

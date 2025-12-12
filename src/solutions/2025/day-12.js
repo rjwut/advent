@@ -1,5 +1,4 @@
-const { match, split } = require('../util');
-const SimpleGrid = require('../simple-grid');
+const { match } = require('../util');
 
 const REGION_REGEXP = /^(?<width>\d+)x(?<height>\d+): (?<shapeCounts>(?:\d+ )+\d+)$/gm;
 
@@ -35,10 +34,10 @@ const REGION_REGEXP = /^(?<width>\d+)x(?<height>\d+): (?<shapeCounts>(?:\d+ )+\d
  * @returns {Array} - the puzzle answers
  */
 module.exports = input => {
-  const { shapeAreas, regions } = parse(input);
+  const regions = parse(input);
   return [ regions.reduce(
     (count, region) => {
-      if (attemptFit(region, shapeAreas)) {
+      if (attemptFit(region)) {
         count++;
       }
 
@@ -48,35 +47,23 @@ module.exports = input => {
 };
 
 /**
- * Parses the puzzle input into an object as follows:
+ * Parses the puzzle input region objects, where each object has the following properties:
  *
- * - `shapeAreas: number[]` - the area of each shape
- * - `regions: Object[]` - the regions to fit shapes into:
- *   - `width: number` - the width of the region
- *   - `height: number` - the height of the region
- *   - `shapeCounts: number[]` - how many of each shape to fit into the region
+ * - `width: number` - the width of the region
+ * - `height: number` - the height of the region
+ * - `shapeCounts: number[]` - how many of each shape to fit into the region
+ *
+ * Note: The actual shapes don't need to be parsed at all.
  *
  * @param {string} input - the puzzle input
- * @returns {Object} - the parsed input
+ * @returns {Object[]} - the parsed regions
  */
-const parse = input => {
-  const regions = match(input, REGION_REGEXP)
-    .map(({ width, height, shapeCounts }) => ({
-      width: parseInt(width, 10),
-      height: parseInt(height, 10),
-      shapeCounts: shapeCounts.split(' ').map(s => parseInt(s, 10)),
-    }));
-  const shapes = split(input, { group: true });
-  shapes.pop(); // remove regions from shapes
-  const shapeAreas = shapes.map(
-    shapeLines => {
-      shapeLines.shift(); // remove shape index line
-      const grid = new SimpleGrid({ data: shapeLines.join('\n')});
-      return grid.count(cell => cell === '#' );
-    }
-  );
-  return { shapeAreas, regions };
-};
+const parse = input => match(input, REGION_REGEXP)
+  .map(({ width, height, shapeCounts }) => ({
+    width: parseInt(width, 10),
+    height: parseInt(height, 10),
+    shapeCounts: shapeCounts.split(' ').map(s => parseInt(s, 10)),
+  }));
 
 /**
  * Attempt to fit the presents into the region.
@@ -85,10 +72,9 @@ const parse = input => {
  * @param {number} region.width - the width of the region
  * @param {number} region.height - the height of the region
  * @param {number[]} region.shapeCounts - the counts of each shape to fit
- * @param {number[]} shapeAreas - the area of each shape
  * @returns {boolean} - whether the presents can fit in the region
  */
-const attemptFit = ({ width, height, shapeCounts }, shapeAreas) => {
+const attemptFit = ({ width, height, shapeCounts }) => {
   const numPresents = shapeCounts.reduce((sum, count) => sum + count, 0);
   return Math.floor(width / 3) * Math.floor(height / 3) >= numPresents;
 };
